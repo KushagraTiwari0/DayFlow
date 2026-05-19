@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Your Day at a Glance - DayFlow</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&amp;family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed-dim": "#cbc6ba",
+                        "surface": "#fcf9f8",
+                        "secondary-fixed": "#ffdbce",
+                        "surface-variant": "#e4e2e1",
+                        "secondary-fixed-dim": "#ffb59a",
+                        "inverse-primary": "#b0cdbb",
+                        "on-primary-container": "#98b5a3",
+                        "on-primary-fixed-variant": "#324c3e",
+                        "primary": "#173124",
+                        "inverse-surface": "#303030",
+                        "on-error": "#ffffff",
+                        "on-tertiary-fixed": "#1e1c14",
+                        "tertiary": "#2d2b23",
+                        "surface-container-highest": "#e4e2e1",
+                        "on-tertiary-fixed-variant": "#4a473d",
+                        "surface-container-lowest": "#ffffff",
+                        "on-background": "#1b1c1c",
+                        "secondary-container": "#fd9e79",
+                        "on-secondary-container": "#773317",
+                        "on-tertiary-container": "#b2ada1",
+                        "outline-variant": "#c2c8c2",
+                        "on-secondary": "#ffffff",
+                        "outline": "#727973",
+                        "on-secondary-fixed": "#370d00",
+                        "on-primary": "#ffffff",
+                        "background": "#fcf9f8",
+                        "surface-bright": "#fcf9f8",
+                        "on-secondary-fixed-variant": "#763316",
+                        "surface-dim": "#dcd9d9",
+                        "error": "#ba1a1a",
+                        "primary-container": "#2d4739",
+                        "surface-tint": "#496455",
+                        "on-primary-fixed": "#062014",
+                        "surface-container": "#f0eded",
+                        "primary-fixed": "#ccead6",
+                        "inverse-on-surface": "#f3f0ef",
+                        "on-error-container": "#93000a",
+                        "on-surface-variant": "#424844",
+                        "surface-container-low": "#f6f3f2",
+                        "error-container": "#ffdad6",
+                        "tertiary-fixed": "#e8e2d5",
+                        "surface-container-high": "#eae7e7",
+                        "secondary": "#94492b",
+                        "on-surface": "#1b1c1c",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-container": "#444138",
+                        "primary-fixed-dim": "#b0cdbb"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "unit": "8px",
+                        "card-gap": "20px",
+                        "container-padding": "24px",
+                        "gutter": "16px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["DM Sans"],
+                        "label-md": ["DM Sans"],
+                        "display": ["Playfair Display"],
+                        "body-sm": ["DM Sans"],
+                        "headline-lg-mobile": ["Playfair Display"],
+                        "body-lg": ["DM Sans"],
+                        "headline-md": ["Playfair Display"],
+                        "headline-lg": ["Playfair Display"]
+                    },
+                    "fontSize": {
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "display": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "700" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: theme('colors.surface-bright');
+            /* Custom dot grid to simulate parchment/corkboard feel while adhering to visual guidelines */
+            background-image: radial-gradient(theme('colors.outline-variant') 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+        
+        .sticky-card {
+            box-shadow: 0px 4px 20px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .sticky-card:hover {
+            box-shadow: 0px 12px 32px rgba(0,0,0,0.08);
+            transform: scale(1.02) !important;
+            z-index: 10;
+        }
+
+        .sticky-tape {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 20px;
+            background-color: rgba(255, 255, 255, 0.4);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            backdrop-filter: blur(2px);
+            transform-origin: center;
+        }
+
+        .punch-hole {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: theme('colors.surface-bright');
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+            margin: 0 8px;
+        }
+
+        .hand-drawn-check {
+            stroke-dasharray: 100;
+            stroke-dashoffset: 100;
+            transition: stroke-dashoffset 0.4s ease-in-out;
+        }
+        
+        .checkbox-input:checked + .checkbox-custom .hand-drawn-check {
+            stroke-dashoffset: 0;
+        }
+
+        .dotted-line {
+            background-image: linear-gradient(to right, theme('colors.primary') 20%, transparent 20%);
+            background-position: bottom;
+            background-size: 8px 1px;
+            background-repeat: repeat-x;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="text-on-background min-h-screen pb-32 pt-20">
+<!-- TopAppBar -->
+<header class="w-full top-0 px-container-padding bg-background dark:bg-background fixed z-50 flex justify-between items-center h-16 shadow-sm border-b border-surface-variant">
+<div class="cursor-pointer active:scale-95 transition-transform hover:opacity-80 flex items-center gap-4">
+<span class="material-symbols-outlined text-primary dark:text-primary-fixed text-2xl" data-icon="menu">menu</span>
+</div>
+<h1 class="font-display text-headline-md text-primary dark:text-primary-fixed">DayFlow</h1>
+<div class="cursor-pointer active:scale-95 transition-transform hover:opacity-80">
+<div class="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-sm overflow-hidden">
+<img alt="User profile avatar" class="w-full h-full object-cover" data-alt="Close up portrait photo of a young woman with a calm expression, soft natural lighting, high end organic aesthetic, tactile minimalism style, professional quality." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBsaPBrLaTNKn-3ub3sEXrBPR1XL0Z6oaEM2o-jKG0az5Y3xceEb38vr223vt6K9cLQjZNAKBs0n5CXxHtL9M5Cw0aE1fPCE-JTlpNkSEDo-UndvNFFgqo9YKS2D4lB5QLnqMeyFzoqUEdy_XryFLae78dcZqcL4gQrnS5VBkV9y6mUDKz9Bs8bt5wqkKAmK78UFge1upPpljd8Uf9m20zAXpz9M7xmTGiLEsOX77NJpdFb2BASQ9Na2p0pol_ywyfgzc46-jQ5UIxT"/>
+</div>
+</div>
+</header>
+<main class="max-w-7xl mx-auto px-container-padding">
+<div class="mb-8 mt-4 text-center md:text-left">
+<h2 class="font-headline-lg-mobile md:font-headline-lg text-primary mb-2">Your Day at a Glance</h2>
+<p class="font-body-md text-on-surface-variant">Wednesday, October 25th</p>
+</div>
+<!-- Bento Grid for Sticky Notes -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-card-gap items-start">
+<!-- Priorities Note (Warm Yellow) -->
+<div class="sticky-card bg-tertiary-fixed rounded-lg p-6 transform -rotate-1 cursor-pointer">
+<div class="sticky-tape -rotate-3"></div>
+<div class="flex items-center justify-between mb-4 border-b border-outline-variant/30 pb-2">
+<h3 class="font-headline-md text-on-tertiary-fixed flex items-center gap-2">
+<span class="material-symbols-outlined" data-icon="star">star</span>
+                        Priorities
+                    </h3>
+</div>
+<div class="space-y-4">
+<label class="flex items-start gap-3 cursor-pointer group">
+<div class="relative pt-1">
+<input checked="" class="checkbox-input sr-only" type="checkbox"/>
+<div class="w-5 h-5 border-2 border-primary rounded-sm flex items-center justify-center bg-transparent group-hover:bg-primary/5 transition-colors checkbox-custom">
+<svg class="w-4 h-4 text-primary absolute pointer-events-none" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" viewbox="0 0 24 24">
+<polyline class="hand-drawn-check" points="20 6 9 17 4 12"></polyline>
+</svg>
+</div>
+</div>
+<span class="font-body-md text-on-tertiary-fixed-variant line-through opacity-70">Finalize Q4 Strategy Deck</span>
+</label>
+<label class="flex items-start gap-3 cursor-pointer group">
+<div class="relative pt-1">
+<input class="checkbox-input sr-only" type="checkbox"/>
+<div class="w-5 h-5 border-2 border-primary rounded-sm flex items-center justify-center bg-transparent group-hover:bg-primary/5 transition-colors checkbox-custom">
+<svg class="w-4 h-4 text-primary absolute pointer-events-none" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" viewbox="0 0 24 24">
+<polyline class="hand-drawn-check" points="20 6 9 17 4 12"></polyline>
+</svg>
+</div>
+</div>
+<span class="font-body-md text-on-tertiary-fixed-variant">Review design mockups</span>
+</label>
+<label class="flex items-start gap-3 cursor-pointer group">
+<div class="relative pt-1">
+<input class="checkbox-input sr-only" type="checkbox"/>
+<div class="w-5 h-5 border-2 border-primary rounded-sm flex items-center justify-center bg-transparent group-hover:bg-primary/5 transition-colors checkbox-custom">
+<svg class="w-4 h-4 text-primary absolute pointer-events-none" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" viewbox="0 0 24 24">
+<polyline class="hand-drawn-check" points="20 6 9 17 4 12"></polyline>
+</svg>
+</div>
+</div>
+<span class="font-body-md text-on-tertiary-fixed-variant dotted-line w-full pb-1">Call with investor</span>
+</label>
+</div>
+</div>
+<!-- Tasks Note (Soft Blue / Primary Fixed Dim) -->
+<div class="sticky-card bg-primary-fixed-dim/40 rounded-lg p-0 transform rotate-1 cursor-pointer overflow-hidden">
+<!-- Perforated top -->
+<div class="bg-primary-container h-10 w-full flex items-center justify-center space-x-2">
+<div class="punch-hole"></div>
+<div class="punch-hole"></div>
+<div class="punch-hole"></div>
+<div class="punch-hole"></div>
+</div>
+<div class="p-6">
+<h3 class="font-headline-md text-primary mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined" data-icon="check_circle">check_circle</span>
+                        Tasks
+                    </h3>
+<ul class="font-body-md text-on-surface-variant space-y-3 list-disc list-inside">
+<li>Reply to essential emails</li>
+<li>Update staging server</li>
+<li>Book flight for conference</li>
+<li class="text-on-surface-variant/50 italic">Pick up dry cleaning</li>
+</ul>
+</div>
+</div>
+<!-- Meals Note (Pale Pink / Secondary Fixed) -->
+<div class="sticky-card bg-secondary-fixed/50 rounded-lg p-6 transform -rotate-2 cursor-pointer md:col-span-2 lg:col-span-1">
+<div class="sticky-tape rotate-2 bg-secondary-container/50"></div>
+<h3 class="font-headline-md text-on-secondary-fixed mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined" data-icon="restaurant">restaurant</span>
+                    Meals
+                </h3>
+<div class="space-y-4">
+<div class="flex justify-between items-center border-b border-secondary/20 pb-2">
+<span class="font-label-md text-secondary">BREAKFAST</span>
+<span class="font-body-sm text-on-secondary-fixed-variant">Oatmeal &amp; Berries</span>
+</div>
+<div class="flex justify-between items-center border-b border-secondary/20 pb-2">
+<span class="font-label-md text-secondary">LUNCH</span>
+<span class="font-body-sm text-on-secondary-fixed-variant">Avocado Toast</span>
+</div>
+<div class="flex justify-between items-center border-b border-secondary/20 pb-2">
+<span class="font-label-md text-secondary">DINNER</span>
+<span class="font-body-sm text-on-secondary-fixed-variant opacity-50 italic">Not logged</span>
+</div>
+</div>
+</div>
+<!-- Water Tracker Note (Mint Green / Primary Fixed) -->
+<div class="sticky-card bg-primary-fixed rounded-lg p-6 transform rotate-1 cursor-pointer">
+<div class="sticky-tape -rotate-1 bg-white/60"></div>
+<h3 class="font-headline-md text-on-primary-fixed mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined" data-icon="water_drop">water_drop</span>
+                    Hydration
+                </h3>
+<div class="flex justify-center gap-3 my-6 flex-wrap">
+<!-- Filled -->
+<div class="w-10 h-10 rounded-full border-2 border-primary bg-primary flex items-center justify-center transition-transform active:scale-90"></div>
+<div class="w-10 h-10 rounded-full border-2 border-primary bg-primary flex items-center justify-center transition-transform active:scale-90"></div>
+<div class="w-10 h-10 rounded-full border-2 border-primary bg-primary flex items-center justify-center transition-transform active:scale-90"></div>
+<div class="w-10 h-10 rounded-full border-2 border-primary bg-primary flex items-center justify-center transition-transform active:scale-90"></div>
+<!-- Empty -->
+<div class="w-10 h-10 rounded-full border-2 border-primary/30 bg-transparent flex items-center justify-center transition-transform active:scale-90 hover:bg-primary/10"></div>
+<div class="w-10 h-10 rounded-full border-2 border-primary/30 bg-transparent flex items-center justify-center transition-transform active:scale-90 hover:bg-primary/10"></div>
+<div class="w-10 h-10 rounded-full border-2 border-primary/30 bg-transparent flex items-center justify-center transition-transform active:scale-90 hover:bg-primary/10"></div>
+<div class="w-10 h-10 rounded-full border-2 border-primary/30 bg-transparent flex items-center justify-center transition-transform active:scale-90 hover:bg-primary/10"></div>
+</div>
+<p class="text-center font-body-sm text-on-primary-fixed-variant">4 of 8 glasses logged</p>
+</div>
+<!-- Health & Fitness Note (Surface Variant) -->
+<div class="sticky-card bg-surface-variant rounded-lg p-6 transform -rotate-1 cursor-pointer md:col-span-2 lg:col-span-2">
+<div class="sticky-tape rotate-1"></div>
+<div class="flex flex-col md:flex-row gap-6 items-center">
+<div class="w-full md:w-1/3">
+<h3 class="font-headline-md text-on-surface mb-2 flex items-center gap-2">
+<span class="material-symbols-outlined" data-icon="monitor_heart">monitor_heart</span>
+                            Health
+                        </h3>
+<p class="font-body-sm text-on-surface-variant mb-4">Evening Yoga Session</p>
+<button class="bg-primary text-on-primary font-label-md px-6 py-2 rounded shadow-sm hover:shadow-md active:translate-y-[1px] transition-all w-full md:w-auto">
+                            LOG ACTIVITY
+                        </button>
+</div>
+<div class="w-full md:w-2/3 bg-surface rounded p-4 border border-outline-variant/30 relative h-32 overflow-hidden">
+<!-- Abstract representation of a chart using divs -->
+<div class="absolute bottom-0 left-0 w-full h-full flex items-end justify-between px-2 gap-1 opacity-60">
+<div class="w-1/12 bg-primary/20 h-[30%] rounded-t-sm"></div>
+<div class="w-1/12 bg-primary/30 h-[50%] rounded-t-sm"></div>
+<div class="w-1/12 bg-primary/40 h-[40%] rounded-t-sm"></div>
+<div class="w-1/12 bg-primary/60 h-[70%] rounded-t-sm"></div>
+<div class="w-1/12 bg-primary/30 h-[20%] rounded-t-sm"></div>
+<div class="w-1/12 bg-primary/80 h-[90%] rounded-t-sm"></div>
+<div class="w-1/12 bg-primary/50 h-[60%] rounded-t-sm"></div>
+</div>
+<div class="relative z-10 flex justify-between h-full flex-col">
+<span class="font-label-md text-outline">WEEKLY TREND</span>
+<span class="font-headline-lg text-primary self-end">6,240 <span class="text-sm font-body-sm text-on-surface-variant">steps</span></span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-gutter pb-4 pt-2 bg-surface-container-low/90 dark:bg-surface-container-low/90 backdrop-blur-md shadow-sm rounded-t-full">
+<!-- Dashboard is Active -->
+<a class="hover:text-primary dark:hover:text-primary-fixed transition-colors active:scale-90 duration-200 flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-full w-12 h-12" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard" data-weight="fill" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+</a>
+<a class="hover:text-primary dark:hover:text-primary-fixed transition-colors active:scale-90 duration-200 flex flex-col items-center justify-center text-outline w-12 h-12" href="#">
+<span class="material-symbols-outlined" data-icon="style">style</span>
+</a>
+<a class="hover:text-primary dark:hover:text-primary-fixed transition-colors active:scale-90 duration-200 flex flex-col items-center justify-center text-outline w-12 h-12" href="#">
+<span class="material-symbols-outlined" data-icon="water_drop">water_drop</span>
+</a>
+<a class="hover:text-primary dark:hover:text-primary-fixed transition-colors active:scale-90 duration-200 flex flex-col items-center justify-center text-outline w-12 h-12" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</a>
+</nav>
+<script>
+        // Simple script to toggle checkboxes for visual feedback
+        document.querySelectorAll('.checkbox-input').forEach(input => {
+            input.addEventListener('change', function() {
+                const labelText = this.closest('label').querySelector('span:not(.material-symbols-outlined)');
+                if(this.checked) {
+                    labelText.classList.add('line-through', 'opacity-70');
+                } else {
+                    labelText.classList.remove('line-through', 'opacity-70');
+                }
+            });
+        });
+    </script>
+</body></html>

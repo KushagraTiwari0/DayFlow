@@ -1,0 +1,2154 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DayFlow — Daily Planner</title>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+        corePlugins: { preflight: false },
+        darkMode: "class",
+        theme: {
+            extend: {
+                colors: {
+                    "tertiary-fixed-dim": "#cbc6ba", "surface": "#fcf9f8", "secondary-fixed": "#ffdbce", "surface-variant": "#e4e2e1", "secondary-fixed-dim": "#ffb59a", "inverse-primary": "#b0cdbb", "on-primary-container": "#98b5a3", "on-primary-fixed-variant": "#324c3e", "primary": "#173124", "inverse-surface": "#303030", "on-error": "#ffffff", "on-tertiary-fixed": "#1e1c14", "tertiary": "#2d2b23", "surface-container-highest": "#e4e2e1", "on-tertiary-fixed-variant": "#4a473d", "surface-container-lowest": "#ffffff", "on-background": "#1b1c1c", "secondary-container": "#fd9e79", "on-secondary-container": "#773317", "on-tertiary-container": "#b2ada1", "outline-variant": "#c2c8c2", "on-secondary": "#ffffff", "outline": "#727973", "on-secondary-fixed": "#370d00", "on-primary": "#ffffff", "background": "#fcf9f8", "surface-bright": "#fcf9f8", "on-secondary-fixed-variant": "#763316", "surface-dim": "#dcd9d9", "error": "#ba1a1a", "primary-container": "#2d4739", "surface-tint": "#496455", "on-primary-fixed": "#062014", "surface-container": "#f0eded", "primary-fixed": "#ccead6", "inverse-on-surface": "#f3f0ef", "on-error-container": "#93000a", "on-surface-variant": "#424844", "surface-container-low": "#f6f3f2", "error-container": "#ffdad6", "tertiary-fixed": "#e8e2d5", "surface-container-high": "#eae7e7", "secondary": "#94492b", "on-surface": "#1b1c1c", "on-tertiary": "#ffffff", "tertiary-container": "#444138", "primary-fixed-dim": "#b0cdbb"
+                },
+                borderRadius: { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" },
+                spacing: { "unit": "8px", "card-gap": "20px", "container-padding": "24px", "gutter": "16px" },
+                fontFamily: { "body-md": ["DM Sans"], "label-md": ["DM Sans"], "display": ["Playfair Display"], "body-sm": ["DM Sans"], "headline-lg-mobile": ["Playfair Display"], "body-lg": ["DM Sans"], "headline-md": ["Playfair Display"], "headline-lg": ["Playfair Display"] },
+            }
+        }
+    }
+</script>
+<!-- Fonts & Icons -->
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyB3df2iUJ-HFvk4DosAaTRgMol8sb88hGg",
+    authDomain: "dayflow-e9370.firebaseapp.com",
+    databaseURL: "https://dayflow-e9370-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "dayflow-e9370",
+    storageBucket: "dayflow-e9370.appspot.com",
+    messagingSenderId: "607244864759",
+    appId: "1:607244864759:web:a5b876e7614be0b6b397f2"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.database();
+  const googleProvider = new firebase.auth.GoogleAuthProvider();
+</script>
+<style>
+  :root {
+    --bg: #fcf9f8;
+    --surface: #ffffff;
+    --surface2: #f0eded;
+    --primary: #2d4739; /* Forest Green */
+    --secondary: #c8622a; /* Terracotta */
+    --accent: #2d4739;
+    --accent2: #c8622a;
+    --accent3: #496455;
+    --gold: #fd9e79;
+    --danger: #ba1a1a;
+    --text: #1a1714;
+    --muted: #7a7168;
+    --border: #e2ddd4;
+    --radius: 4px;
+    --radius-sm: 2px;
+    --shadow-float: 0 20px 40px rgba(0, 0, 0, 0.08);
+    --shadow-press: 0 4px 8px rgba(0, 0, 0, 0.05);
+    --shadow: var(--shadow-press);
+    --shadow-active: var(--shadow-float);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* AUTH SCREEN */
+  .auth-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #173124 0%, #2d4739 40%, #062014 100%);
+    position: relative;
+    overflow: hidden;
+  }
+  .auth-screen::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+  .auth-card {
+    background: rgba(255,255,255,0.97);
+    border-radius: 20px;
+    padding: 3rem 2.5rem;
+    width: 420px;
+    max-width: 95vw;
+    text-align: center;
+    position: relative;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.4);
+  }
+  .auth-logo { font-family: 'Playfair Display', serif; font-size: 2.5rem; font-weight: 700; color: var(--accent); letter-spacing: -1px; margin-bottom: 0.25rem; }
+  .auth-tagline { font-size: 0.85rem; color: var(--muted); margin-bottom: 2.5rem; letter-spacing: 0.08em; text-transform: uppercase; }
+  .auth-divider { display: flex; align-items: center; gap: 12px; margin: 1.5rem 0; }
+  .auth-divider span { flex: 1; height: 1px; background: var(--border); }
+  .auth-divider p { font-size: 0.78rem; color: var(--muted); }
+  .auth-input { width: 100%; border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 0.75rem 1rem; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; margin-bottom: 0.75rem; outline: none; transition: border-color 0.2s; background: var(--bg); }
+  .auth-input:focus { border-color: var(--accent); }
+  .btn-primary { width: 100%; background: var(--accent); color: white; border: none; border-radius: var(--radius-sm); padding: 0.85rem; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
+  .btn-primary:hover { opacity: 0.88; }
+  .btn-google {
+    width: 100%; background: white; color: #3c4043; border: 1.5px solid #dadce0;
+    border-radius: var(--radius-sm); padding: 0.75rem; font-size: 0.88rem; font-weight: 500;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
+    font-family: 'DM Sans', sans-serif; transition: background 0.2s; margin-bottom: 0.75rem;
+  }
+  .btn-google:hover { background: #f8f9fa; }
+  .google-icon { width: 18px; height: 18px; }
+  .auth-switch { font-size: 0.82rem; color: var(--muted); margin-top: 1.5rem; }
+  .auth-switch a { color: var(--accent); cursor: pointer; font-weight: 500; }
+
+  /* MAIN APP */
+  .app { display: none; min-height: 100vh; }
+  .app.visible { display: block; }
+
+  /* SIDEBAR */
+  .layout { display: flex; min-height: 100vh; }
+  .sidebar {
+    width: 240px; background: #173124; color: white; padding: 1.5rem 0;
+    display: flex; flex-direction: column; flex-shrink: 0;
+    position: sticky; top: 0; height: 100vh; overflow-y: auto;
+  }
+  .sidebar-logo { font-family: 'Playfair Display', serif; font-size: 1.6rem; font-weight: 700; color: var(--gold); padding: 0 1.5rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .sidebar-section { padding: 1rem 0; }
+  .sidebar-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.12em; color: rgba(255,255,255,0.35); padding: 0 1.5rem; margin-bottom: 0.5rem; }
+  .sidebar-link {
+    display: flex; align-items: center; gap: 10px; padding: 0.6rem 1.5rem;
+    font-size: 0.85rem; color: rgba(255,255,255,0.65); cursor: pointer;
+    transition: all 0.15s; border-left: 3px solid transparent;
+  }
+  .sidebar-link:hover { color: white; background: rgba(255,255,255,0.06); }
+  .sidebar-link.active { color: white; border-left-color: var(--gold); background: rgba(184,150,62,0.1); }
+  .sidebar-link .icon { font-size: 1rem; width: 18px; }
+  .sidebar-bottom { margin-top: auto; padding: 1rem 1.5rem; border-top: 1px solid rgba(255,255,255,0.08); }
+  .user-chip { display: flex; align-items: center; gap: 10px; }
+  .avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--gold); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 600; color: #1b1c1c; flex-shrink: 0; }
+  .user-name { font-size: 0.82rem; font-weight: 500; color: white; }
+  .user-email { font-size: 0.72rem; color: rgba(255,255,255,0.4); }
+  .btn-logout { background: none; border: none; color: rgba(255,255,255,0.4); font-size: 0.75rem; cursor: pointer; margin-top: 0.5rem; padding: 0; font-family: 'DM Sans', sans-serif; }
+  .btn-logout:hover { color: rgba(255,255,255,0.8); }
+
+  /* MAIN CONTENT */
+  .main { flex: 1; overflow-x: hidden; }
+
+  /* TOP BAR */
+  .topbar {
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    padding: 1rem 2rem; display: flex; align-items: center; gap: 1rem;
+    position: sticky; top: 0; z-index: 10;
+  }
+  .topbar-title { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 600; flex: 1; }
+  .search-wrap { display: flex; align-items: center; gap: 8px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.4rem 0.75rem; flex: 1; max-width: 360px; }
+  .search-wrap input { border: none; background: none; outline: none; font-family: 'DM Sans', sans-serif; font-size: 0.85rem; width: 100%; }
+  .search-icon { color: var(--muted); font-size: 1rem; }
+  .cal-btn {
+    display: flex; align-items: center; gap: 6px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 0.4rem 0.85rem; cursor: pointer; font-size: 0.82rem;
+    font-family: 'DM Sans', sans-serif; font-weight: 500; color: var(--text); position: relative;
+  }
+  .cal-btn:hover { background: var(--bg); }
+
+  /* CALENDAR DROPDOWN */
+  .cal-dropdown {
+    position: absolute; top: calc(100% + 8px); right: 0; background: var(--surface);
+    border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 1rem; z-index: 100; width: 280px; display: none;
+  }
+  .cal-dropdown.open { display: block; }
+  .cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
+  .cal-nav { background: none; border: none; cursor: pointer; color: var(--muted); font-size: 1.1rem; padding: 2px 6px; border-radius: 4px; }
+  .cal-nav:hover { background: var(--bg); }
+  .cal-month { font-weight: 600; font-size: 0.88rem; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+  .cal-dow { text-align: center; font-size: 0.65rem; color: var(--muted); padding: 3px; font-weight: 600; text-transform: uppercase; }
+  .cal-day {
+    text-align: center; font-size: 0.78rem; padding: 5px 2px; border-radius: 6px;
+    cursor: pointer; transition: all 0.1s;
+  }
+  .cal-day:hover { background: var(--bg); }
+  .cal-day.today { background: var(--accent); color: white; font-weight: 600; }
+  .cal-day.selected { background: var(--accent2); color: white; font-weight: 600; }
+  .cal-day.other-month { color: var(--border); }
+  .cal-day.has-entry { position: relative; }
+  .cal-day.has-entry::after { content: ''; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; border-radius: 50%; background: var(--gold); }
+
+  /* PAGE CONTENT */
+  .page { padding: 2rem; display: none; }
+  .page.active { display: block; }
+
+  /* PLANNER PAGE */
+  .date-header { display: flex; align-items: baseline; gap: 1rem; margin-bottom: 2rem; }
+  .date-big { font-family: 'Playfair Display', serif; font-size: 2.5rem; font-weight: 700; color: var(--text); }
+  .date-sub { font-size: 0.9rem; color: var(--muted); }
+  .planner-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+  .planner-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+  .card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); padding: 1.25rem; box-shadow: var(--shadow); transition: box-shadow 0.2s, transform 0.2s; }
+  .card:hover { box-shadow: var(--shadow-active); transform: translateY(-2px); }
+  .card-full { grid-column: 1 / -1; }
+  .card-title { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); font-weight: 600; margin-bottom: 1rem; display: flex; align-items: center; gap: 6px; }
+  .card-title .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+
+  /* TODO ITEMS */
+  .todo-item { display: flex; align-items: center; gap: 10px; padding: 0.35rem 0; border-bottom: 1px dashed var(--border); }
+  .todo-item:last-child { border-bottom: none; }
+  .todo-cb { width: 16px; height: 16px; border: 1.5px solid var(--border); border-radius: 4px; flex-shrink: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .todo-cb.checked { background: var(--accent); border-color: var(--accent); }
+  .todo-cb.checked::after { content: '✓'; color: white; font-size: 10px; }
+  .todo-text { font-size: 0.85rem; flex: 1; border: none; outline: none; background: none; font-family: 'DM Sans', sans-serif; color: var(--text); }
+  .todo-text.done { text-decoration: line-through; color: var(--muted); }
+  .todo-del { background: none; border: none; color: var(--border); cursor: pointer; font-size: 0.9rem; opacity: 0; }
+  .todo-item:hover .todo-del { opacity: 1; }
+  .add-item { width: 100%; background: none; border: 1px dashed var(--border); border-radius: var(--radius-sm); padding: 0.5rem 0.75rem; font-size: 0.8rem; color: var(--muted); cursor: pointer; text-align: left; margin-top: 0.5rem; font-family: 'DM Sans', sans-serif; }
+  .add-item:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* MEAL TRACKER */
+  .meal-section { margin-bottom: 0.75rem; }
+  .meal-label { font-size: 0.72rem; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.3rem; }
+  .meal-input { width: 100%; border: none; border-bottom: 1px dashed var(--border); padding: 0.3rem 0; font-size: 0.85rem; font-family: 'DM Sans', sans-serif; outline: none; background: none; color: var(--text); }
+  .meal-input:focus { border-bottom-color: var(--accent); }
+
+  /* WATER TRACKER */
+  .water-cups { display: flex; gap: 6px; flex-wrap: wrap; }
+  .cup { width: 28px; height: 28px; border: 2px solid var(--border); border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; transition: all 0.15s; }
+  .cup.filled { background: #3a86c8; border-color: #3a86c8; color: white; }
+
+  /* RATE YOUR DAY */
+  .rate-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.6rem; }
+  .rate-label { font-size: 0.8rem; color: var(--text); }
+  .rate-stars { display: flex; gap: 4px; }
+  .star { font-size: 1.1rem; cursor: pointer; color: var(--border); transition: color 0.1s; }
+  .star.lit { color: var(--gold); }
+
+  /* EXPENSE TRACKER */
+  .expense-row { display: flex; gap: 8px; margin-bottom: 0.5rem; align-items: center; }
+  .exp-input { flex: 1; border: none; border-bottom: 1px dashed var(--border); padding: 0.25rem 0; font-size: 0.82rem; font-family: 'DM Sans', sans-serif; outline: none; background: none; color: var(--text); }
+  .exp-amount { width: 80px; text-align: right; }
+  .expense-total { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--border); padding-top: 0.5rem; margin-top: 0.5rem; display: flex; justify-content: space-between; }
+  .expense-total strong { color: var(--accent2); }
+
+  /* NOTES */
+  .notes-area { width: 100%; border: none; resize: vertical; font-family: 'DM Sans', sans-serif; font-size: 0.85rem; line-height: 1.7; min-height: 80px; outline: none; background: none; color: var(--text); }
+
+  /* SCHEDULE */
+  .schedule-row { display: flex; gap: 8px; align-items: center; padding: 0.3rem 0; border-bottom: 1px dashed var(--border); }
+  .schedule-time { font-size: 0.72rem; color: var(--muted); width: 44px; flex-shrink: 0; }
+  .schedule-input { flex: 1; border: none; font-size: 0.82rem; font-family: 'DM Sans', sans-serif; outline: none; background: none; color: var(--text); }
+
+  /* HEALTH */
+  .health-row { display: flex; gap: 8px; align-items: center; margin-bottom: 0.5rem; }
+  .health-input { flex: 1; border: none; border-bottom: 1px dashed var(--border); padding: 0.25rem 0; font-size: 0.82rem; font-family: 'DM Sans', sans-serif; outline: none; background: none; }
+  .health-time { width: 60px; text-align: right; font-size: 0.78rem; color: var(--muted); border-bottom: 1px dashed var(--border); }
+  .health-total { font-size: 0.8rem; color: var(--accent); font-weight: 600; text-align: right; margin-top: 0.5rem; }
+
+  /* SEARCH RESULTS */
+  .search-results { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.5rem; }
+  .search-result-item { padding: 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--border); margin-bottom: 0.5rem; cursor: pointer; transition: all 0.15s; }
+  .search-result-item:hover { border-color: var(--accent); background: var(--bg); }
+  .result-date { font-size: 0.72rem; color: var(--muted); margin-bottom: 2px; }
+  .result-preview { font-size: 0.85rem; color: var(--text); }
+  .highlight { background: #fef3c7; border-radius: 2px; padding: 0 2px; }
+
+  /* PROFILE PAGE */
+  .profile-card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); padding: 2rem; max-width: 520px; }
+  .profile-avatar { width: 80px; height: 80px; border-radius: 50%; background: var(--gold); display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: 700; color: #1b1c1c; margin-bottom: 1.25rem; }
+  .profile-field { margin-bottom: 1.25rem; }
+  .field-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); font-weight: 600; margin-bottom: 0.4rem; }
+  .field-input { width: 100%; border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 0.6rem 0.85rem; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; outline: none; transition: border-color 0.2s; background: var(--bg); }
+  .field-input:focus { border-color: var(--accent); }
+  .btn-save { background: var(--accent); color: white; border: none; border-radius: var(--radius-sm); padding: 0.65rem 1.5rem; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; font-weight: 600; cursor: pointer; }
+  .btn-save:hover { opacity: 0.88; }
+
+  /* STATS PAGE */
+  .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2rem; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; box-shadow: var(--shadow); }
+  .stat-num { font-family: 'Playfair Display', serif; font-size: 2.5rem; font-weight: 700; color: var(--accent); }
+  .stat-label { font-size: 0.78rem; color: var(--muted); margin-top: 0.25rem; }
+  .mood-bar { height: 8px; background: var(--bg); border-radius: 99px; margin-top: 0.5rem; overflow: hidden; }
+  .mood-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--accent2), var(--gold)); }
+
+  /* NOTIFICATION */
+  .toast {
+    position: fixed; bottom: 1.5rem; right: 1.5rem; background: var(--accent); color: white;
+    padding: 0.75rem 1.25rem; border-radius: var(--radius-sm); font-size: 0.85rem;
+    box-shadow: var(--shadow); z-index: 9999; transform: translateY(80px); opacity: 0;
+    transition: all 0.3s; pointer-events: none;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  /* WEEKDAY SELECTOR */
+  .weekday-bar { display: flex; gap: 6px; margin-bottom: 1.5rem; }
+  .weekday-btn {
+    flex: 1; padding: 0.5rem; text-align: center; border: 1px solid var(--border);
+    border-radius: var(--radius-sm); cursor: pointer; font-size: 0.72rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); background: var(--surface);
+    transition: all 0.15s;
+  }
+  .weekday-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .weekday-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+  .loading-overlay {
+    position: fixed; inset: 0; background: rgba(26,23,20,0.7);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 99999; backdrop-filter: blur(4px);
+  }
+  .loading-spinner {
+    background: white; border-radius: 16px; padding: 2rem 2.5rem;
+    text-align: center; font-family: 'DM Sans', sans-serif;
+  }
+  .spinner { width: 36px; height: 36px; border: 3px solid #e4e2e1; border-top-color: #173124; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 1rem; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .save-indicator { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); background: rgba(23,49,36,0.9); color: white; padding: 0.4rem 1rem; border-radius: 99px; font-size: 0.78rem; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 9998; }
+  .save-indicator.show { opacity: 1; }
+  @media (max-w: 768px) {
+    .sidebar { display: none; }
+    .planner-grid { grid-template-columns: 1fr; }
+    .planner-grid.three { grid-template-columns: 1fr; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .topbar { padding: 0.75rem 1rem; }
+    .page { padding: 1rem; }
+  }
+  
+
+/* --- Dashboard UI CSS --- */
+/* Base styles */
+        body {
+            background-color: theme('colors.surface-bright');
+            min-height: max(884px, 100dvh);
+            /* Dot grid for Dashboard view */
+            background-image: radial-gradient(theme('colors.outline-variant') 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24; }
+        .icon-fill { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        
+        /* Views */
+        #swipe-flow, #dashboard-view { transition: opacity 0.4s ease, visibility 0.4s ease; }
+        .hidden-view { opacity: 0; visibility: hidden; position: absolute; top: 0; left: 0; width: 100%; pointer-events: none; }
+        
+        /* --- Swipe Flow Specifics --- */
+        .custom-checkbox input:checked + div { background-color: theme('colors.primary'); border-color: theme('colors.primary'); }
+        .custom-checkbox input:checked + div svg { display: block; }
+        
+        .analog-input {
+            background-image: linear-gradient(to right, theme('colors.outline-variant') 33%, rgba(255,255,255,0) 0%);
+            background-position: bottom;
+            background-size: 6px 2px;
+            background-repeat: repeat-x;
+        }
+        .analog-input:focus { background-image: linear-gradient(to right, theme('colors.primary') 100%, rgba(255,255,255,0) 0%); }
+
+        .card-enter { opacity: 0; transform: scale(0.95) translateY(10px); z-index: 10; pointer-events: none;}
+        .card-active { opacity: 1; transform: scale(1) translateY(0); z-index: 20; pointer-events: auto;}
+        .card-exit { opacity: 0; transform: scale(1.05) translateY(-10px); z-index: 5; pointer-events: none;}
+
+        /* --- Dashboard Specifics --- */
+        @keyframes pinReveal { 0% { opacity: 0; translate: 0 40px; } 100% { opacity: 1; translate: 0 0; } }
+        
+        .sticky-card {
+            box-shadow: 0px 4px 20px rgba(0,0,0,0.05);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            animation: pinReveal 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            opacity: 0;
+        }
+        .sticky-card:nth-child(1) { animation-delay: 0.05s; }
+        .sticky-card:nth-child(2) { animation-delay: 0.1s; }
+        .sticky-card:nth-child(3) { animation-delay: 0.15s; }
+        .sticky-card:nth-child(4) { animation-delay: 0.2s; }
+        .sticky-card:nth-child(5) { animation-delay: 0.25s; }
+        .sticky-card:nth-child(6) { animation-delay: 0.3s; }
+        .sticky-card:nth-child(7) { animation-delay: 0.35s; }
+        .sticky-card:nth-child(8) { animation-delay: 0.4s; }
+        .sticky-card:nth-child(9) { animation-delay: 0.45s; }
+        .sticky-card:nth-child(10) { animation-delay: 0.5s; }
+        
+        .sticky-card:hover { box-shadow: 8px 16px 32px rgba(0,0,0,0.1); transform: scale(1.03) perspective(800px) rotateX(3deg) rotateY(-3deg) !important; z-index: 10; }
+
+        .sticky-tape {
+            position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+            width: 40px; height: 20px; background-color: rgba(255, 255, 255, 0.4);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1); backdrop-filter: blur(2px); transform-origin: center;
+        }
+        .punch-hole { width: 12px; height: 12px; border-radius: 50%; background-color: theme('colors.surface-bright'); box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); margin: 0 8px; }
+
+        .hand-drawn-check { stroke-dasharray: 100; stroke-dashoffset: 100; transition: stroke-dashoffset 0.4s ease-in-out; }
+        .checkbox-input:checked + .checkbox-custom .hand-drawn-check { stroke-dashoffset: 0; }
+        .dotted-line { background-image: linear-gradient(to right, theme('colors.primary') 20%, transparent 20%); background-position: bottom; background-size: 8px 1px; background-repeat: repeat-x; }
+
+        .strikethrough-animated { position: relative; display: inline-block; transition: opacity 0.3s ease; }
+        .strikethrough-animated::after {
+            content: ''; position: absolute; left: 0; top: 50%; height: 1.5px;
+            background-color: currentColor; width: 0; transition: width 0.3s ease-in-out; pointer-events: none;
+        }
+        .strikethrough-active::after { width: 100%; }
+        .strikethrough-active { opacity: 0.6; }
+
+/* --- Paper & Ink Minimalism with Antigravity Motion --- */
+h1, h2, h3, .brand-logo {
+  font-family: 'Playfair Display', serif;
+}
+
+/* Antigravity Floating Dashboard Container */
+.dashboard-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px 16px 120px;
+  perspective: 1000px;
+}
+@media (min-width: 768px) {
+  .dashboard-container {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1024px) {
+  .dashboard-container {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Individual Sticky Note / Card Styling */
+.sticky-note {
+  background: var(--surface);
+  border-radius: 4px;
+  padding: 24px;
+  position: relative;
+  box-shadow: var(--shadow-float);
+  border: 1px solid var(--border);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+  transform: rotate(-0.5deg) translateY(0);
+}
+
+.sticky-note:active {
+  transform: scale(0.98);
+  box-shadow: var(--shadow-press);
+}
+
+/* Antigravity "Drift" Animation */
+@keyframes ambientDrift {
+  0% { transform: translateY(0px) rotate(-0.5deg); }
+  50% { transform: translateY(-8px) rotate(0.5deg); }
+  100% { transform: translateY(0px) rotate(-0.5deg); }
+}
+
+.sticky-note-animated {
+  animation: ambientDrift 6s ease-in-out infinite;
+}
+
+/* Stagger drift animations slightly */
+.sticky-note:nth-child(2n) {
+  animation-duration: 10s;
+  animation-delay: -2s;
+}
+
+.sticky-note:nth-child(3n) {
+  animation-duration: 12s;
+  animation-delay: -5s;
+}
+
+/* Color variations for notes */
+.note-priorities { background: #f0ede6; border-top: 6px solid var(--primary); }
+.note-tasks { background: #e8f0eb; }
+.note-meals { background: #fff1eb; }
+.note-hydration { background: #e3f2fd; }
+
+/* 3. Card Flow (Guided Entry) */
+.card-stack-container {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  overflow: hidden;
+}
+
+.flow-card {
+  width: 100%;
+  max-width: 400px;
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 40px 32px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+  border: 1px solid var(--border);
+  position: relative;
+}
+
+.progress-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 24px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+}
+
+.dot-active {
+  background: var(--primary);
+  width: 24px;
+  border-radius: 4px;
+}
+
+/* 4. Common Components */
+.btn-next {
+  width: 100%;
+  background: var(--primary);
+  color: white;
+  padding: 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 32px;
+}
+
+.todo-checkbox {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.todo-checkbox.checked {
+  background: var(--primary);
+  border-color: var(--primary);
+  transform: scale(1.1);
+}
+
+.todo-checkbox.checked::after {
+  content: '✓';
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+/* Parallax Depth Layers (Optional extra dimensionality) */
+.depth-layer-far {
+  transform: translateZ(-20px) scale(1.1);
+}
+
+.depth-layer-near {
+  transform: translateZ(20px) scale(0.9);
+}
+
+/* Navigation - Floating Bottom Bar */
+.bottom-nav {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  border-radius: 99px;
+  padding: 12px 24px;
+  display: flex;
+  gap: 32px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  z-index: 100;
+  display: none; /* hidden on desktop */
+}
+
+@media (max-w: 768px) {
+  .bottom-nav {
+    display: flex; /* shown on mobile */
+  }
+}
+
+.bottom-nav button {
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: transform 0.2s, background-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bottom-nav button:hover {
+  background: rgba(45, 71, 57, 0.1);
+}
+
+.bottom-nav button.active {
+  background: var(--primary);
+  color: white;
+  transform: scale(1.15);
+}
+
+.btn-logout-profile {
+  background: transparent;
+  color: var(--secondary);
+  border: 1.5px solid var(--secondary);
+  border-radius: 4px;
+  padding: 10px 16px;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 12px;
+  transition: background-color 0.2s, transform 0.1s;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.btn-logout-profile:hover {
+  background: rgba(200, 98, 42, 0.08);
+}
+.btn-logout-profile:active {
+  transform: scale(0.98);
+}
+</style>
+</head>
+<body>
+
+<!-- AUTH SCREEN -->
+<div class="auth-screen" id="authScreen">
+  <div class="auth-card">
+    <div class="auth-logo">DayFlow</div>
+    <div class="auth-tagline">Your daily rhythm, beautifully planned</div>
+
+    <button class="btn-google" onclick="googleSignIn()">
+      <svg class="google-icon" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+      Continue with Google
+    </button>
+
+    <div class="auth-divider"><span></span><p>or sign in with email</p><span></span></div>
+
+    <input class="auth-input" type="email" placeholder="Email address" id="loginEmail" />
+    <input class="auth-input" type="password" placeholder="Password" id="loginPassword" />
+    <button class="btn-primary" onclick="emailSignIn()">Sign in</button>
+
+    <div class="auth-switch">Don't have an account? <a onclick="showSignup()">Create one</a></div>
+  </div>
+</div>
+
+<!-- SIGNUP SCREEN (hidden) -->
+<div class="auth-screen" id="signupScreen" style="display:none;">
+  <div class="auth-card">
+    <div class="auth-logo">DayFlow</div>
+    <div class="auth-tagline">Create your account</div>
+    <button class="btn-google" onclick="googleSignIn()">
+      <svg class="google-icon" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+      Sign up with Google
+    </button>
+    <div class="auth-divider"><span></span><p>or register with email</p><span></span></div>
+    <input class="auth-input" type="text" placeholder="Full name" id="signupName" />
+    <input class="auth-input" type="email" placeholder="Email address" id="signupEmail" />
+    <input class="auth-input" type="password" placeholder="Create password" id="signupPassword" />
+    <button class="btn-primary" onclick="emailSignUp()">Create Account</button>
+    <div class="auth-switch">Already have an account? <a onclick="showLogin()">Sign in</a></div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div class="app" id="mainApp">
+  <div class="layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">DayFlow</div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Planning</div>
+        <div class="sidebar-link active" onclick="showPage('planner', this)">
+          <span class="icon">📋</span> Daily Planner
+        </div>
+        <div class="sidebar-link" onclick="showPage('schedule', this)">
+          <span class="icon">🕐</span> Schedule
+        </div>
+        <div class="sidebar-link" onclick="showPage('tasks', this)">
+          <span class="icon">✅</span> Tasks
+        </div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Tracking</div>
+        <div class="sidebar-link" onclick="showPage('expenses', this)">
+          <span class="icon">💰</span> Expenses
+        </div>
+        <div class="sidebar-link" onclick="showPage('health', this)">
+          <span class="icon">💪</span> Health & Fitness
+        </div>
+        <div class="sidebar-link" onclick="showPage('stats', this)">
+          <span class="icon">📊</span> Statistics
+        </div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Account</div>
+        <div class="sidebar-link" onclick="showPage('profile', this)">
+          <span class="icon">👤</span> Profile
+        </div>
+      </div>
+      <div class="sidebar-bottom">
+        <div class="user-chip">
+          <div class="avatar" id="sidebarAvatar">U</div>
+          <div>
+            <div class="user-name" id="sidebarName">User</div>
+            <div class="user-email" id="sidebarEmail">user@email.com</div>
+          </div>
+        </div>
+        <button class="btn-logout" onclick="signOut()">← Sign out</button>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+
+      <!-- TOP BAR -->
+      <div class="topbar">
+        <div class="topbar-title" id="pageTitle">Daily Planner</div>
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" placeholder="Search entries..." id="globalSearch" oninput="handleSearch(this.value)" />
+        </div>
+        <div style="position:relative;">
+          <button class="cal-btn" onclick="toggleCalendar()">
+            📅 <span id="calBtnText">Today</span>
+          </button>
+          <div class="cal-dropdown" id="calDropdown">
+            <div class="cal-header">
+              <button class="cal-nav" onclick="changeMonth(-1)">‹</button>
+              <span class="cal-month" id="calMonthLabel"></span>
+              <button class="cal-nav" onclick="changeMonth(1)">›</button>
+            </div>
+            <div class="cal-grid" id="calGrid"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SEARCH RESULTS -->
+      <div id="searchResultsPanel" style="display:none; padding: 1.5rem 2rem 0;">
+        <div class="search-results">
+          <div class="card-title"><span class="dot"></span> Search Results</div>
+          <div id="searchResultsList"></div>
+        </div>
+      </div>
+
+      <!-- PLANNER PAGE -->
+      
+<!-- PLANNER PAGE -->
+      <div class="page active" id="page-planner">
+        <div class="date-header">
+          <div class="date-big" id="plannerDateBig"></div>
+          <div class="date-sub" id="plannerDateSub"></div>
+        </div>
+        <div class="weekday-bar" id="weekdayBar"></div>
+
+        <div class="dashboard-container">
+
+          <!-- TOP PRIORITIES -->
+          <div class="sticky-card bg-tertiary-fixed rounded-lg p-6 transform -rotate-1 cursor-pointer">
+            <div class="sticky-tape -rotate-3"></div>
+            <div class="flex items-center justify-between mb-4 border-b border-outline-variant/30 pb-2">
+              <h3 class="font-headline-md text-on-tertiary-fixed flex items-center gap-2">
+                <span class="material-symbols-outlined">star</span> Priorities
+              </h3>
+            </div>
+            <div id="priorityList" class="space-y-2"></div>
+            <button class="add-item mt-4" onclick="addPriority()">+ Add priority</button>
+          </div>
+
+          <!-- TO DO LISTS -->
+          <div class="sticky-card bg-primary-fixed-dim/40 rounded-lg p-0 transform rotate-1 cursor-pointer overflow-hidden">
+            <div class="bg-primary-container h-10 w-full flex items-center justify-center space-x-2">
+              <div class="punch-hole"></div><div class="punch-hole"></div><div class="punch-hole"></div><div class="punch-hole"></div>
+            </div>
+            <div class="p-6">
+              <h3 class="font-headline-md text-primary mb-4 flex items-center gap-2">
+                <span class="material-symbols-outlined">check_circle</span> To Do List
+              </h3>
+              <div id="todoList" class="space-y-2"></div>
+              <button class="add-item mt-4" onclick="addTodo()">+ Add item</button>
+            </div>
+          </div>
+
+          <!-- PERSONAL TO DO -->
+          <div class="sticky-card bg-surface-container rounded-lg p-6 transform -rotate-2 cursor-pointer">
+            <div class="sticky-tape rotate-2 bg-primary-container/20"></div>
+            <div class="flex items-center justify-between mb-4 border-b border-outline-variant/30 pb-2">
+              <h3 class="font-headline-md text-primary flex items-center gap-2">
+                <span class="material-symbols-outlined">person</span> Personal To Do
+              </h3>
+            </div>
+            <div id="personalList" class="space-y-2"></div>
+            <button class="add-item mt-4" onclick="addPersonal()">+ Add item</button>
+          </div>
+
+          <!-- CALLS / EMAILS -->
+          <div class="sticky-card bg-secondary-fixed/30 rounded-lg p-6 transform rotate-2 cursor-pointer">
+            <div class="sticky-tape -rotate-2 bg-secondary-container/30"></div>
+            <div class="flex items-center justify-between mb-4 border-b border-outline-variant/30 pb-2">
+              <h3 class="font-headline-md text-on-secondary-fixed flex items-center gap-2">
+                <span class="material-symbols-outlined">mail</span> Calls / Emails
+              </h3>
+            </div>
+            <div id="callsList" class="space-y-2"></div>
+            <button class="add-item mt-4" onclick="addCall()">+ Add item</button>
+          </div>
+
+          <!-- MEALS -->
+          <div class="sticky-card bg-secondary-fixed/50 rounded-lg p-6 transform -rotate-1 cursor-pointer">
+            <div class="sticky-tape rotate-3 bg-secondary-container/50"></div>
+            <div class="flex items-center justify-between mb-4 border-b border-outline-variant/30 pb-2">
+              <h3 class="font-headline-md text-on-secondary-fixed flex items-center gap-2">
+                <span class="material-symbols-outlined">restaurant</span> Meals
+              </h3>
+            </div>
+            <div class="space-y-4">
+              <div class="meal-section border-b border-secondary/20 pb-2">
+                <div class="meal-label text-secondary flex items-center gap-1.5"><span class="material-symbols-outlined text-[16px]">wb_sunny</span> Breakfast</div>
+                <input class="meal-input font-body-sm text-on-secondary-fixed-variant" placeholder="What did you eat?" id="mealBreakfast" oninput="saveEntry()" />
+              </div>
+              <div class="meal-section border-b border-secondary/20 pb-2">
+                <div class="meal-label text-secondary flex items-center gap-1.5"><span class="material-symbols-outlined text-[16px]">restaurant</span> Lunch</div>
+                <input class="meal-input font-body-sm text-on-secondary-fixed-variant" placeholder="What did you eat?" id="mealLunch" oninput="saveEntry()" />
+              </div>
+              <div class="meal-section border-b border-secondary/20 pb-2">
+                <div class="meal-label text-secondary flex items-center gap-1.5"><span class="material-symbols-outlined text-[16px]">nights_stay</span> Dinner</div>
+                <input class="meal-input font-body-sm text-on-secondary-fixed-variant" placeholder="What did you eat?" id="mealDinner" oninput="saveEntry()" />
+              </div>
+            </div>
+          </div>
+
+          <!-- WATER TRACKER -->
+          <div class="sticky-card bg-primary-fixed/40 rounded-lg p-0 transform rotate-1 cursor-pointer overflow-hidden">
+            <div class="bg-inverse-primary/30 h-10 w-full flex items-center justify-center space-x-2">
+              <div class="punch-hole"></div><div class="punch-hole"></div><div class="punch-hole"></div><div class="punch-hole"></div>
+            </div>
+            <div class="p-6">
+              <h3 class="font-headline-md text-primary mb-4 flex items-center gap-2">
+                <span class="material-symbols-outlined">water_drop</span> Hydration
+              </h3>
+              <div class="water-cups" id="waterCups"></div>
+              <div style="font-size:0.78rem; color:var(--muted); margin-top:0.75rem;" id="waterLabel">0 / 8 glasses</div>
+            </div>
+          </div>
+
+          <!-- APPOINTMENTS -->
+          <div class="sticky-card bg-tertiary-fixed/60 rounded-lg p-6 transform -rotate-2 cursor-pointer">
+            <div class="sticky-tape -rotate-1 bg-tertiary/20"></div>
+            <div class="flex items-center justify-between mb-4 border-b border-outline-variant/30 pb-2">
+              <h3 class="font-headline-md text-on-tertiary-fixed flex items-center gap-2">
+                <span class="material-symbols-outlined">calendar_today</span> Appointments
+              </h3>
+            </div>
+            <div id="appointmentList" class="space-y-2"></div>
+            <button class="add-item mt-4" onclick="addAppointment()">+ Add appointment</button>
+          </div>
+
+          <!-- RATE YOUR DAY -->
+          <div class="sticky-card bg-surface-container rounded-lg p-6 transform rotate-2 cursor-pointer">
+            <div class="sticky-tape rotate-2 bg-primary-container/10"></div>
+            <div class="flex items-center justify-between mb-4 border-b border-outline-variant/30 pb-2">
+              <h3 class="font-headline-md text-primary flex items-center gap-2">
+                <span class="material-symbols-outlined">sentiment_satisfied</span> Rate Your Day
+              </h3>
+            </div>
+            <div class="space-y-4">
+              <div class="rate-row flex items-center justify-between">
+                <div class="rate-label font-body-sm text-on-surface-variant">⭐ Productivity</div>
+                <div class="rate-stars flex gap-1" id="stars-productivity"></div>
+              </div>
+              <div class="rate-row flex items-center justify-between">
+                <div class="rate-label font-body-sm text-on-surface-variant">😊 Mood</div>
+                <div class="rate-stars flex gap-1" id="stars-mood"></div>
+              </div>
+              <div class="rate-row flex items-center justify-between">
+                <div class="rate-label font-body-sm text-on-surface-variant">💚 Health</div>
+                <div class="rate-stars flex gap-1" id="stars-health"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- NOTES -->
+          <div class="sticky-card bg-primary-fixed-dim/30 rounded-lg p-0 transform -rotate-1 cursor-pointer overflow-hidden">
+            <div class="bg-primary-container/20 h-10 w-full flex items-center justify-center space-x-2">
+              <div class="punch-hole"></div><div class="punch-hole"></div><div class="punch-hole"></div><div class="punch-hole"></div>
+            </div>
+            <div class="p-6">
+              <h3 class="font-headline-md text-primary mb-4 flex items-center gap-2">
+                <span class="material-symbols-outlined">edit_note</span> Notes
+              </h3>
+              <textarea class="notes-area font-body-sm text-on-surface-variant bg-transparent w-full resize-none border-none outline-none focus:ring-0" placeholder="Write your notes for today..." id="notesField" oninput="saveEntry()"></textarea>
+            </div>
+          </div>
+
+          <!-- NOTES FOR TOMORROW -->
+          <div class="sticky-card bg-secondary-fixed/40 rounded-lg p-6 transform rotate-1 cursor-pointer">
+            <div class="sticky-tape -rotate-3 bg-secondary-container/40"></div>
+            <div class="flex items-center justify-between mb-4 border-b border-outline-variant/30 pb-2">
+              <h3 class="font-headline-md text-on-secondary-fixed flex items-center gap-2">
+                <span class="material-symbols-outlined">event_upcoming</span> Notes for Tomorrow
+              </h3>
+            </div>
+            <textarea class="notes-area font-body-sm text-on-surface-variant bg-transparent w-full resize-none border-none outline-none focus:ring-0" placeholder="What to remember for tomorrow..." id="notesTomorrowField" oninput="saveEntry()"></textarea>
+          </div>
+
+        </div>
+      </div>
+
+<!-- SWIPE FLOW PAGE -->
+<div class="page" id="page-swipe-flow" style="margin: -2rem; min-height: 100vh;">
+    <!-- ==========================================
+         VIEW 1: SWIPE CARD FLOW (PLAN YOUR DAY)
+         ========================================== -->
+    <div id="swipe-flow" style="position:relative; z-index:50;" class="w-full h-screen flex flex-col overflow-hidden bg-background">
+        <!-- Header -->
+        <header class="w-full flex justify-between items-center px-container-padding py-6 z-50">
+            <h1 class="font-headline-md text-headline-md text-primary">Plan Your Day</h1>
+            <button id="skipBtn" class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors tracking-widest uppercase">Skip</button>
+        </header>
+
+        <!-- Main Card Flow Area -->
+        <main class="flex-1 w-full relative flex items-center justify-center overflow-hidden perspective-1000">
+            
+            <!-- Card 1: Top Priorities -->
+            <article class="absolute w-[85%] max-w-md bg-surface-container-lowest rounded-xl shadow-[0px_4px_20px_rgba(0,0,0,0.05)] border border-outline-variant/30 p-8 flex flex-col h-auto max-h-[calc(100vh-180px)] overflow-y-auto transition-all duration-500 ease-out card-active" data-index="0" style="transform: rotate(-0.5deg);">
+                <div class="mb-8 border-b-2 border-primary border-dotted pb-4">
+                    <h2 class="font-headline-lg-mobile text-headline-lg-mobile text-primary">Top Priorities</h2>
+                    <p class="font-body-sm text-body-sm text-on-surface-variant mt-2">What needs your absolute focus today?</p>
+                </div>
+                <div class="flex flex-col gap-6 flex-1 justify-center">
+                    <div class="flex items-center gap-4 group">
+                        <span class="font-display text-primary/40 text-headline-md group-focus-within:text-primary transition-colors">1.</span>
+                        <input type="text" class="w-full bg-transparent border-0 border-b-2 border-outline-variant/40 focus:border-primary focus:ring-0 px-0 py-2 font-body-lg text-body-lg text-primary placeholder:text-outline-variant transition-colors" id="sf-priority-1" placeholder="Write your first priority..." />
+                    </div>
+                    <div class="flex items-center gap-4 group">
+                        <span class="font-display text-primary/40 text-headline-md group-focus-within:text-primary transition-colors">2.</span>
+                        <input type="text" class="w-full bg-transparent border-0 border-b-2 border-outline-variant/40 focus:border-primary focus:ring-0 px-0 py-2 font-body-lg text-body-lg text-primary placeholder:text-outline-variant transition-colors" id="sf-priority-2" placeholder="Second priority..." />
+                    </div>
+                    <div class="flex items-center gap-4 group">
+                        <span class="font-display text-primary/40 text-headline-md group-focus-within:text-primary transition-colors">3.</span>
+                        <input type="text" class="w-full bg-transparent border-0 border-b-2 border-outline-variant/40 focus:border-primary focus:ring-0 px-0 py-2 font-body-lg text-body-lg text-primary placeholder:text-outline-variant transition-colors" id="sf-priority-3" placeholder="Third priority..." />
+                    </div>
+                </div>
+            </article>
+
+            <!-- Card 2: To-Do List -->
+            <article class="absolute w-[85%] max-w-md bg-surface-container-lowest rounded-xl shadow-[0px_4px_20px_rgba(0,0,0,0.05)] border border-outline-variant/30 p-8 flex flex-col h-auto max-h-[calc(100vh-180px)] overflow-y-auto transition-all duration-500 ease-out card-enter" data-index="1" style="transform: rotate(0.5deg);">
+                <div class="mb-6 border-b-2 border-primary border-dotted pb-4">
+                    <h2 class="font-headline-lg-mobile text-headline-lg-mobile text-primary">To-Do List</h2>
+                    <p class="font-body-sm text-body-sm text-on-surface-variant mt-2">The secondary tasks to tackle.</p>
+                </div>
+                <div class="flex flex-col gap-4 flex-1 overflow-y-auto pr-2 custom-scrollbar">
+                    <label class="flex items-center gap-4 cursor-pointer group">
+                        <input type="checkbox" id="sf-todo-cb-1" class="w-5 h-5 accent-primary border-outline-variant rounded cursor-pointer flex-shrink-0" />
+                        <input type="text" id="sf-todo-1" class="w-full bg-transparent border-0 border-b border-outline-variant focus:border-primary focus:ring-0 px-0 py-1 font-body-md text-body-md text-on-background placeholder:text-outline-variant/50 transition-colors" placeholder="Add a task..." />
+                    </label>
+                    <label class="flex items-center gap-4 cursor-pointer group">
+                        <input type="checkbox" id="sf-todo-cb-2" class="w-5 h-5 accent-primary border-outline-variant rounded cursor-pointer flex-shrink-0" />
+                        <input type="text" id="sf-todo-2" class="w-full bg-transparent border-0 border-b border-outline-variant focus:border-primary focus:ring-0 px-0 py-1 font-body-md text-body-md text-on-background placeholder:text-outline-variant/50 transition-colors" placeholder="Add another task..." />
+                    </label>
+                    <label class="flex items-center gap-4 cursor-pointer group">
+                        <input type="checkbox" id="sf-todo-cb-3" class="w-5 h-5 accent-primary border-outline-variant rounded cursor-pointer flex-shrink-0" />
+                        <input type="text" id="sf-todo-3" class="w-full bg-transparent border-0 border-b border-outline-variant focus:border-primary focus:ring-0 px-0 py-1 font-body-md text-body-md text-on-background placeholder:text-outline-variant/50 transition-colors" placeholder="Add one more task..." />
+                    </label>
+                </div>
+            </article>
+
+            <!-- Card 3: Meal Tracker -->
+            <article class="absolute w-[85%] max-w-md bg-surface-container-lowest rounded-xl shadow-[0px_4px_20px_rgba(0,0,0,0.05)] border border-outline-variant/30 p-8 flex flex-col h-auto max-h-[calc(100vh-180px)] overflow-y-auto transition-all duration-500 ease-out card-enter" data-index="2" style="transform: rotate(-0.2deg);">
+                <div class="mb-8 border-b-2 border-primary border-dotted pb-4">
+                    <h2 class="font-headline-lg-mobile text-headline-lg-mobile text-primary">Nourishment</h2>
+                    <p class="font-body-sm text-body-sm text-on-surface-variant mt-2">Fuel for your focus.</p>
+                </div>
+                <div class="flex flex-col gap-6 flex-1">
+                    <div class="flex flex-col gap-2">
+                        <div class="flex items-center gap-2 text-secondary">
+                            <span class="material-symbols-outlined text-[20px]">wb_sunny</span>
+                            <span class="font-label-md text-label-md uppercase tracking-wider">Breakfast</span>
+                        </div>
+                        <input type="text" id="sf-meal-breakfast" class="w-full bg-transparent border-0 border-b border-outline-variant focus:border-secondary focus:ring-0 px-0 py-1 font-body-md text-body-md text-on-background placeholder:text-outline-variant" placeholder="What's for breakfast?" />
+                    </div>
+                    <div class="flex flex-col gap-2">
+                        <div class="flex items-center gap-2 text-primary-container">
+                            <span class="material-symbols-outlined text-[20px]">restaurant</span>
+                            <span class="font-label-md text-label-md uppercase tracking-wider">Lunch</span>
+                        </div>
+                        <input type="text" id="sf-meal-lunch" class="w-full bg-transparent border-0 border-b border-outline-variant focus:border-primary-container focus:ring-0 px-0 py-1 font-body-md text-body-md text-on-background placeholder:text-outline-variant" placeholder="Midday meal plans?" />
+                    </div>
+                    <div class="flex flex-col gap-2">
+                        <div class="flex items-center gap-2 text-primary">
+                            <span class="material-symbols-outlined text-[20px]">nights_stay</span>
+                            <span class="font-label-md text-label-md uppercase tracking-wider">Dinner</span>
+                        </div>
+                        <input type="text" id="sf-meal-dinner" class="w-full bg-transparent border-0 border-b border-outline-variant focus:border-primary focus:ring-0 px-0 py-1 font-body-md text-body-md text-on-background placeholder:text-outline-variant" placeholder="What's for dinner?" />
+                    </div>
+                </div>
+            </article>
+
+            <!-- Card 4: Water Intake -->
+            <article class="absolute w-[85%] max-w-md bg-surface-container-lowest rounded-xl shadow-[0px_4px_20px_rgba(0,0,0,0.05)] border border-outline-variant/30 p-8 flex flex-col h-auto max-h-[calc(100vh-180px)] overflow-y-auto transition-all duration-500 ease-out card-enter" data-index="3" style="transform: rotate(0.8deg);">
+                <div class="mb-12 border-b-2 border-primary border-dotted pb-4">
+                    <h2 class="font-headline-lg-mobile text-headline-lg-mobile text-primary">Hydration</h2>
+                    <p class="font-body-sm text-body-sm text-on-surface-variant mt-2">Tap a glass to log your intake.</p>
+                </div>
+                <div class="flex-1 flex flex-col items-center justify-center gap-8">
+                    <div class="grid grid-cols-4 gap-4 w-full" id="waterTracker">
+                        <button class="water-glass flex flex-col items-center gap-2 group transition-transform active:scale-90"><span class="material-symbols-outlined text-4xl text-outline-variant group-hover:text-inverse-primary transition-colors">water_drop</span></button>
+                        <button class="water-glass flex flex-col items-center gap-2 group transition-transform active:scale-90"><span class="material-symbols-outlined text-4xl text-outline-variant group-hover:text-inverse-primary transition-colors">water_drop</span></button>
+                        <button class="water-glass flex flex-col items-center gap-2 group transition-transform active:scale-90"><span class="material-symbols-outlined text-4xl text-outline-variant group-hover:text-inverse-primary transition-colors">water_drop</span></button>
+                        <button class="water-glass flex flex-col items-center gap-2 group transition-transform active:scale-90"><span class="material-symbols-outlined text-4xl text-outline-variant group-hover:text-inverse-primary transition-colors">water_drop</span></button>
+                    </div>
+                    <p id="waterCount" class="font-label-md text-label-md text-outline">0 / 4 Glasses</p>
+                </div>
+            </article>
+        </main>
+
+        <!-- Footer Controls -->
+        <footer class="w-full px-container-padding py-8 flex flex-col items-center gap-6 z-50">
+            <!-- Progress Dots -->
+            <div id="progressDots" class="flex gap-2">
+                <div class="w-2 h-2 rounded-full bg-primary transition-all duration-300"></div>
+                <div class="w-2 h-2 rounded-full bg-outline-variant transition-all duration-300"></div>
+                <div class="w-2 h-2 rounded-full bg-outline-variant transition-all duration-300"></div>
+                <div class="w-2 h-2 rounded-full bg-outline-variant transition-all duration-300"></div>
+            </div>
+            <!-- Action Button -->
+            <button id="mainActionBtn" class="bg-primary text-on-primary w-full max-w-sm rounded-full py-4 px-6 font-label-md text-label-md uppercase tracking-widest shadow-md hover:bg-surface-tint active:scale-95 transition-all flex items-center justify-center gap-2">
+                <span>Next</span>
+                <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+            </button>
+        </footer>
+    </div>
+</div>
+
+      <!-- SCHEDULE PAGE -->
+      <div class="page" id="page-schedule">
+        <div class="date-header">
+          <div class="date-big">Daily Schedule</div>
+        </div>
+        <div class="planner-grid" style="grid-template-columns: 1fr 1fr;">
+          <div class="card card-full">
+            <div class="card-title"><span class="dot"></span> Daily Schedules</div>
+            <div id="scheduleList"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TASKS PAGE -->
+      <div class="page" id="page-tasks">
+        <div class="date-header"><div class="date-big">All Tasks</div></div>
+        <div class="planner-grid">
+          <div class="card card-full">
+            <div class="card-title"><span class="dot"></span> Task Overview</div>
+            <div id="allTasksList" style="font-size:0.85rem; color:var(--muted);">Select a date to see tasks.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- EXPENSES PAGE -->
+      <div class="page" id="page-expenses">
+        <div class="date-header"><div class="date-big">Expenses</div></div>
+        <div class="planner-grid">
+          <div class="card">
+            <div class="card-title"><span class="dot" style="background:var(--accent2)"></span> Expense Tracker</div>
+            <div id="expenseList"></div>
+            <button class="add-item" onclick="addExpense()">+ Add expense</button>
+            <div class="expense-total"><span>Total spent</span><strong id="expTotal">₹0</strong></div>
+          </div>
+          <div class="card">
+            <div class="card-title"><span class="dot" style="background:var(--gold)"></span> Money Deposited for Future</div>
+            <div id="savingsList"></div>
+            <button class="add-item" onclick="addSaving()">+ Add saving</button>
+            <div class="expense-total"><span>Total saved</span><strong id="savTotal" style="color:var(--accent)">₹0</strong></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- HEALTH PAGE -->
+      <div class="page" id="page-health">
+        <div class="date-header"><div class="date-big">Health & Fitness</div></div>
+        <div class="planner-grid">
+          <div class="card card-full">
+            <div class="card-title"><span class="dot" style="background:var(--accent2)"></span> Health & Fitness Log</div>
+            <div id="healthList"></div>
+            <button class="add-item" onclick="addHealth()">+ Add activity</button>
+            <div class="health-total" id="healthTotal">Total: 0 min</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STATS PAGE -->
+      <div class="page" id="page-stats">
+        <div class="date-header"><div class="date-big">Statistics</div></div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-num" id="statEntries">0</div>
+            <div class="stat-label">Days logged</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num" id="statTasks">0</div>
+            <div class="stat-label">Tasks completed</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num" id="statWater">0</div>
+            <div class="stat-label">Avg. water glasses/day</div>
+          </div>
+        </div>
+        <div class="planner-grid">
+          <div class="card">
+            <div class="card-title"><span class="dot"></span> Average Ratings</div>
+            <div class="rate-row"><div class="rate-label">⭐ Productivity</div><span id="avgProd" style="font-weight:600; color:var(--gold);">—</span></div>
+            <div class="mood-bar"><div class="mood-fill" id="barProd" style="width:0%"></div></div>
+            <br/>
+            <div class="rate-row"><div class="rate-label">😊 Mood</div><span id="avgMood" style="font-weight:600; color:var(--gold);">—</span></div>
+            <div class="mood-bar"><div class="mood-fill" id="barMood" style="width:0%"></div></div>
+            <br/>
+            <div class="rate-row"><div class="rate-label">💚 Health</div><span id="avgHealth" style="font-weight:600; color:var(--gold);">—</span></div>
+            <div class="mood-bar"><div class="mood-fill" id="barHealth" style="width:0%"></div></div>
+          </div>
+          <div class="card">
+            <div class="card-title"><span class="dot" style="background:var(--accent2)"></span> Monthly Expenses</div>
+            <div style="font-size:0.85rem; color:var(--muted);" id="statExpenses">No expense data yet.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROFILE PAGE -->
+      <div class="page" id="page-profile">
+        <div class="date-header"><div class="date-big">Profile</div></div>
+        <div class="profile-card">
+          <div class="profile-avatar" id="profileAvatar">U</div>
+          <div class="profile-field">
+            <div class="field-label">Full Name</div>
+            <input class="field-input" type="text" id="profileName" placeholder="Your name" />
+          </div>
+          <div class="profile-field">
+            <div class="field-label">Email</div>
+            <input class="field-input" type="email" id="profileEmail" placeholder="your@email.com" readonly style="color:var(--muted);" />
+          </div>
+          <div class="profile-field">
+            <div class="field-label">Daily Water Goal (glasses)</div>
+            <input class="field-input" type="number" id="profileWater" value="8" min="1" max="20" />
+          </div>
+          <div class="profile-field">
+            <div class="field-label">Timezone</div>
+            <input class="field-input" type="text" id="profileTimezone" value="Asia/Kolkata" />
+          </div>
+          <button class="btn-save" onclick="saveProfile()">Save Changes</button>
+          <button class="btn-logout-profile" onclick="signOut()">← Logout</button>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- FLOATING BOTTOM NAV BAR (MOBILE ONLY) -->
+<div class="bottom-nav" id="bottomNav">
+  <button onclick="showPage('planner', this)" class="active">
+    <span>📋</span>
+  </button>
+  <button onclick="showPage('schedule', this)">
+    <span>🕐</span>
+  </button>
+  <button onclick="showPage('swipe-flow', this)">
+    <span>⚡</span>
+  </button>
+  <button onclick="showPage('tasks', this)">
+    <span>✅</span>
+  </button>
+  <button onclick="showPage('stats', this)">
+    <span>📊</span>
+  </button>
+  <button onclick="showPage('profile', this)">
+    <span>👤</span>
+  </button>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+<!-- SAVE INDICATOR -->
+<div class="save-indicator" id="saveIndicator">💾 Saved</div>
+
+<script>
+// ── STATE ──
+let currentUser = null;
+let currentDate = new Date();
+let selectedDate = new Date();
+let calMonth = new Date();
+let entries = {};
+let profile = {};
+let saveTimer = null;
+
+function debouncedSave() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    await persistData();
+    const ind = document.getElementById('saveIndicator');
+    ind.classList.add('show');
+    setTimeout(() => ind.classList.remove('show'), 1500);
+  }, 1200);
+}
+
+const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+function dateKey(d) {
+  return d.toISOString().split('T')[0];
+}
+
+function getEntry(dateStr) {
+  if (!entries[dateStr]) {
+    entries[dateStr] = {
+      todos: [], priorities: [], calls: [], personal: [], appointments: [],
+      meals: { breakfast:'', lunch:'', dinner:'' },
+      water: 0, waterGoal: 8,
+      ratings: { productivity: 0, mood: 0, health: 0 },
+      notes: '', notesTomorrow: '',
+      expenses: [], savings: [],
+      health: [], schedule: []
+    };
+  }
+  return entries[dateStr];
+}
+
+function saveEntry() {
+  const key = dateKey(selectedDate);
+  const e = entries[key];
+  const mb = document.getElementById('mealBreakfast'); if(mb) e.meals.breakfast = mb.value;
+  const ml = document.getElementById('mealLunch'); if(ml) e.meals.lunch = ml.value;
+  const md = document.getElementById('mealDinner'); if(md) e.meals.dinner = md.value;
+  const nf = document.getElementById('notesField'); if(nf) e.notes = nf.value;
+  const ntf = document.getElementById('notesTomorrowField'); if(ntf) e.notesTomorrow = ntf.value;
+  e.planCreated = true;
+  debouncedSave();
+}
+
+async function persistData() {
+  if (!currentUser) return;
+  try {
+    await db.ref('planners/' + currentUser.uid + '/entries').set(entries);
+    await db.ref('planners/' + currentUser.uid + '/profile').set(profile);
+  } catch (e) {
+    showToast('Save failed: ' + e.message);
+  }
+}
+
+async function loadData() {
+  if (!currentUser) return;
+  try {
+    const snap = await db.ref('planners/' + currentUser.uid).get();
+    if (snap.exists()) {
+      const data = snap.val();
+      entries = data.entries || {};
+      profile = data.profile || {};
+    } else {
+      entries = {};
+      profile = {};
+    }
+  } catch (e) {
+    showToast('Load failed: ' + e.message);
+    entries = {};
+    profile = {};
+  }
+}
+
+// ── AUTH ──
+async function googleSignIn() {
+  try {
+    showToast('Opening Google sign-in...');
+    const result = await auth.signInWithPopup(googleProvider);
+    // onAuthStateChanged handles the rest
+  } catch (e) {
+    if (e.code === 'auth/popup-blocked') {
+      showToast('Popup blocked — please allow popups for this site');
+    } else {
+      showToast('Google sign-in failed: ' + e.message);
+    }
+  }
+}
+
+async function emailSignIn() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass = document.getElementById('loginPassword').value;
+  if (!email || !pass) { showToast('Please fill in all fields'); return; }
+  setAuthLoading(true);
+  try {
+    await auth.signInWithEmailAndPassword(email, pass);
+    // onAuthStateChanged handles the rest
+  } catch (e) {
+    const msgs = {
+      'auth/user-not-found': 'No account found. Please sign up.',
+      'auth/wrong-password': 'Incorrect password.',
+      'auth/invalid-email': 'Invalid email address.',
+      'auth/too-many-requests': 'Too many attempts. Try again later.'
+    };
+    showToast(msgs[e.code] || e.message);
+    setAuthLoading(false);
+  }
+}
+
+async function emailSignUp() {
+  const name = document.getElementById('signupName').value.trim();
+  const email = document.getElementById('signupEmail').value.trim();
+  const pass = document.getElementById('signupPassword').value;
+  if (!name || !email || !pass) { showToast('Please fill in all fields'); return; }
+  if (pass.length < 6) { showToast('Password must be at least 6 characters'); return; }
+  setAuthLoading(true);
+  try {
+    const cred = await auth.createUserWithEmailAndPassword(email, pass);
+    await cred.user.updateProfile({ displayName: name });
+    // onAuthStateChanged handles the rest
+  } catch (e) {
+    const msgs = {
+      'auth/email-already-in-use': 'Email already in use. Please sign in.',
+      'auth/invalid-email': 'Invalid email address.',
+      'auth/weak-password': 'Password is too weak.'
+    };
+    showToast(msgs[e.code] || e.message);
+    setAuthLoading(false);
+  }
+}
+
+function setAuthLoading(on) {
+  document.querySelectorAll('.btn-primary').forEach(b => {
+    b.disabled = on;
+    b.textContent = on ? 'Please wait...' : (b.dataset.label || b.textContent);
+  });
+}
+
+// Firebase Auth state listener — single source of truth
+auth.onAuthStateChanged(async (firebaseUser) => {
+  if (firebaseUser) {
+    currentUser = {
+      uid: firebaseUser.uid,
+      name: firebaseUser.displayName || firebaseUser.email.split('@')[0],
+      email: firebaseUser.email,
+      provider: firebaseUser.providerData[0]?.providerId || 'email'
+    };
+    showToast('Loading your data... ⏳');
+    await loadData();
+    profile = { name: currentUser.name, email: currentUser.email, waterGoal: 8, timezone: 'Asia/Kolkata', ...profile };
+    document.getElementById('authScreen').style.display = 'none';
+    document.getElementById('signupScreen').style.display = 'none';
+    document.getElementById('mainApp').classList.add('visible');
+    setAuthLoading(false);
+    updateUserUI();
+    
+    // Check if plan for today has already been created
+    const todayKey = dateKey(new Date());
+    const hasPlan = entries[todayKey] && entries[todayKey].planCreated;
+    
+    if (hasPlan) {
+      showPage('planner', null);
+      loadPlannerForDate(selectedDate);
+    } else {
+      showSwipeFlow();
+    }
+    
+    renderCalendar();
+    showToast('Welcome back, ' + currentUser.name.split(' ')[0] + '! 👋');
+  } else {
+    currentUser = null;
+    entries = {};
+    document.getElementById('mainApp').classList.remove('visible');
+    document.getElementById('authScreen').style.display = 'flex';
+  }
+});
+
+async function signOut() {
+  await auth.signOut();
+  entries = {};
+  profile = {};
+  // onAuthStateChanged handles UI update
+}
+
+function showSignup() {
+  document.getElementById('authScreen').style.display = 'none';
+  document.getElementById('signupScreen').style.display = 'flex';
+}
+function showLogin() {
+  document.getElementById('signupScreen').style.display = 'none';
+  document.getElementById('authScreen').style.display = 'flex';
+}
+
+function updateUserUI() {
+  const initials = profile.name ? profile.name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2) : 'U';
+  document.getElementById('sidebarAvatar').textContent = initials;
+  document.getElementById('sidebarName').textContent = profile.name || 'User';
+  document.getElementById('sidebarEmail').textContent = profile.email || '';
+  document.getElementById('profileAvatar').textContent = initials;
+  document.getElementById('profileName').value = profile.name || '';
+  document.getElementById('profileEmail').value = profile.email || '';
+  document.getElementById('profileWater').value = profile.waterGoal || 8;
+  document.getElementById('profileTimezone').value = profile.timezone || 'Asia/Kolkata';
+}
+
+// ── PAGES ──
+function showPage(name, el) {
+  document.querySelectorAll('.page').forEach(p => {
+    p.classList.remove('active');
+    p.style.display = (p.id === 'page-' + name) ? 'block' : 'none';
+  });
+
+  // Sync sidebar links active status
+  document.querySelectorAll('.sidebar-link').forEach(l => {
+    l.classList.remove('active');
+    if (l.getAttribute('onclick') && l.getAttribute('onclick').includes(`'${name}'`)) {
+      l.classList.add('active');
+    }
+  });
+
+  // Sync bottom nav buttons active status
+  document.querySelectorAll('.bottom-nav button').forEach(btn => {
+    btn.classList.remove('active');
+    if (btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(`'${name}'`)) {
+      btn.classList.add('active');
+    }
+  });
+
+  const titles = { 
+    planner: 'Daily Planner', 
+    schedule: 'Schedule', 
+    'swipe-flow': 'Swipe Flow', 
+    tasks: 'Tasks', 
+    expenses: 'Expenses', 
+    health: 'Health & Fitness', 
+    stats: 'Statistics', 
+    profile: 'Profile' 
+  };
+  document.getElementById('pageTitle').textContent = titles[name] || name;
+
+  // Toggle topbar visibility for Swipe Flow focus view
+  const topbar = document.querySelector('.topbar');
+  if (topbar) {
+    if (name === 'swipe-flow') {
+      topbar.style.display = 'none';
+    } else {
+      topbar.style.display = 'flex';
+    }
+  }
+
+  if (name === 'stats') renderStats();
+  if (name === 'schedule') renderSchedule();
+  if (name === 'expenses') renderExpenses();
+  if (name === 'health') renderHealth();
+  if (name === 'tasks') renderTasks();
+  if (name === 'swipe-flow') initSwipeFlowData();
+  if (name === 'planner') loadPlannerForDate(selectedDate);
+}
+
+// ── PLANNER ──
+function loadPlannerForDate(date) {
+  selectedDate = date;
+  const key = dateKey(date);
+  const e = getEntry(key);
+
+  // Header
+  document.getElementById('plannerDateBig').textContent = date.getDate() + ' ' + MONTHS[date.getMonth()];
+  document.getElementById('plannerDateSub').textContent = DAYS[date.getDay()] + ', ' + date.getFullYear();
+  document.getElementById('calBtnText').textContent = key === dateKey(new Date()) ? 'Today' : (date.getDate() + '/' + (date.getMonth()+1));
+
+  // Weekday bar
+  const bar = document.getElementById('weekdayBar');
+  bar.innerHTML = '';
+  const shortDays = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const weekStart = new Date(date);
+  weekStart.setDate(date.getDate() - ((date.getDay() + 6) % 7));
+  shortDays.forEach((d, i) => {
+    const dayDate = new Date(weekStart);
+    dayDate.setDate(weekStart.getDate() + i);
+    const btn = document.createElement('div');
+    btn.className = 'weekday-btn' + (dateKey(dayDate) === key ? ' active' : '');
+    btn.innerHTML = `<div>${d}</div><div style="font-size:0.9rem; margin-top:2px;">${dayDate.getDate()}</div>`;
+    btn.onclick = () => { loadPlannerForDate(new Date(dayDate)); };
+    bar.appendChild(btn);
+  });
+
+  // Lists
+  renderList('todoList', e.todos, 'todos', key);
+  renderList('priorityList', e.priorities, 'priorities', key);
+  renderList('callsList', e.calls, 'calls', key);
+  renderList('personalList', e.personal, 'personal', key);
+  renderList('appointmentList', e.appointments, 'appointments', key);
+
+  // Meals
+  const mb = document.getElementById('mealBreakfast'); if(mb) mb.value = e.meals.breakfast || '';
+  const ml = document.getElementById('mealLunch'); if(ml) ml.value = e.meals.lunch || '';
+  const md = document.getElementById('mealDinner'); if(md) md.value = e.meals.dinner || '';
+
+  // Water
+  renderWater(e, key);
+
+  // Ratings
+  ['productivity','mood','health'].forEach(r => renderStars(r, e.ratings[r], key));
+
+  // Notes
+  const nf = document.getElementById('notesField'); if(nf) nf.value = e.notes || '';
+  const ntf = document.getElementById('notesTomorrowField'); if(ntf) ntf.value = e.notesTomorrow || '';
+}
+
+function renderList(containerId, items, field, key) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = '';
+  (items || []).forEach((item, i) => {
+    const row = document.createElement('div');
+    row.className = 'todo-item';
+    row.innerHTML = `
+      <div class="relative cursor-pointer flex-shrink-0" onclick="toggleTodo('${field}','${key}',${i})">
+        <input type="checkbox" class="checkbox-input sr-only" ${item.done ? 'checked' : ''} />
+        <div class="w-5 h-5 border-2 border-primary rounded-sm flex items-center justify-center bg-transparent transition-colors checkbox-custom">
+          <svg viewBox="0 0 24 24" class="w-4 h-4 text-primary absolute pointer-events-none" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12" class="hand-drawn-check"></polyline>
+          </svg>
+        </div>
+      </div>
+      <input class="todo-text strikethrough-animated ${item.done ? 'strikethrough-active' : ''}" value="${escHtml(item.text)}" onchange="updateTodoText('${field}','${key}',${i},this.value)" />
+      <button class="todo-del" onclick="deleteTodo('${field}','${key}',${i})">✕</button>
+    `;
+    el.appendChild(row);
+  });
+}
+
+function escHtml(s) { return (s||'').replace(/"/g,'&quot;'); }
+
+function toggleTodo(field, key, i) {
+  entries[key][field][i].done = !entries[key][field][i].done;
+  entries[key].planCreated = true;
+  renderList(fieldToContainerId(field), entries[key][field], field, key);
+  debouncedSave();
+}
+function updateTodoText(field, key, i, val) {
+  entries[key][field][i].text = val;
+  entries[key].planCreated = true;
+  debouncedSave();
+}
+function deleteTodo(field, key, i) {
+  entries[key][field].splice(i, 1);
+  renderList(fieldToContainerId(field), entries[key][field], field, key);
+  debouncedSave();
+}
+function fieldToContainerId(f) {
+  return { todos:'todoList', priorities:'priorityList', calls:'callsList', personal:'personalList', appointments:'appointmentList' }[f];
+}
+function addItem(field) {
+  const key = dateKey(selectedDate);
+  getEntry(key)[field].push({ text: '', done: false });
+  entries[key].planCreated = true;
+  renderList(fieldToContainerId(field), entries[key][field], field, key);
+  debouncedSave();
+  setTimeout(() => { const inputs = document.querySelectorAll('#'+fieldToContainerId(field)+' .todo-text'); if(inputs.length) inputs[inputs.length-1].focus(); }, 50);
+}
+function addTodo() { addItem('todos'); }
+function addPriority() { addItem('priorities'); }
+function addCall() { addItem('calls'); }
+function addPersonal() { addItem('personal'); }
+function addAppointment() { addItem('appointments'); }
+
+// ── WATER ──
+function renderWater(e, key) {
+  const goal = profile.waterGoal || 8;
+  const cups = document.getElementById('waterCups');
+  if (cups) {
+    cups.innerHTML = '';
+    for (let i = 0; i < goal; i++) {
+      const cup = document.createElement('div');
+      cup.className = 'cup' + (i < e.water ? ' filled' : '');
+      cup.textContent = '💧';
+      cup.onclick = () => { e.water = (e.water === i+1) ? i : i+1; e.planCreated = true; renderWater(e, key); debouncedSave(); };
+      cups.appendChild(cup);
+    }
+  }
+  const wl = document.getElementById('waterLabel');
+  if (wl) wl.textContent = e.water + ' / ' + goal + ' glasses';
+}
+
+// ── STARS ──
+function renderStars(type, val, key) {
+  const el = document.getElementById('stars-' + type);
+  if (!el) return;
+  el.innerHTML = '';
+  for (let i = 1; i <= 5; i++) {
+    const s = document.createElement('div');
+    s.className = 'star' + (i <= val ? ' lit' : '');
+    s.textContent = '★';
+    s.onclick = () => {
+      const e = getEntry(key);
+      e.ratings[type] = (e.ratings[type] === i) ? 0 : i;
+      e.planCreated = true;
+      renderStars(type, e.ratings[type], key);
+      debouncedSave();
+    };
+    el.appendChild(s);
+  }
+}
+
+// ── CALENDAR ──
+function toggleCalendar() {
+  document.getElementById('calDropdown').classList.toggle('open');
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('.cal-btn') && !e.target.closest('.cal-dropdown')) {
+    document.getElementById('calDropdown').classList.remove('open');
+  }
+});
+
+function renderCalendar() {
+  const year = calMonth.getFullYear(), month = calMonth.getMonth();
+  document.getElementById('calMonthLabel').textContent = MONTHS[month] + ' ' + year;
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML = '';
+  ['S','M','T','W','T','F','S'].forEach(d => {
+    const el = document.createElement('div'); el.className = 'cal-dow'; el.textContent = d; grid.appendChild(el);
+  });
+  const first = new Date(year, month, 1).getDay();
+  const days = new Date(year, month+1, 0).getDate();
+  const today = dateKey(new Date());
+  for (let i = 0; i < first; i++) {
+    const el = document.createElement('div'); el.className = 'cal-day other-month'; grid.appendChild(el);
+  }
+  for (let d = 1; d <= days; d++) {
+    const dayDate = new Date(year, month, d);
+    const key = dateKey(dayDate);
+    const el = document.createElement('div');
+    el.className = 'cal-day' + (key === today ? ' today' : '') + (key === dateKey(selectedDate) ? ' selected' : '') + (entries[key] ? ' has-entry' : '');
+    el.textContent = d;
+    el.onclick = () => {
+      selectedDate = dayDate;
+      document.getElementById('calDropdown').classList.remove('open');
+      showPage('planner', document.querySelector('.sidebar-link'));
+      document.querySelectorAll('.sidebar-link').forEach((l,i) => { if(i===0) l.classList.add('active'); else l.classList.remove('active'); });
+      loadPlannerForDate(dayDate);
+      renderCalendar();
+    };
+    grid.appendChild(el);
+  }
+}
+
+function changeMonth(dir) {
+  calMonth.setMonth(calMonth.getMonth() + dir);
+  renderCalendar();
+}
+
+// ── EXPENSES ──
+function renderExpenses() {
+  const key = dateKey(selectedDate);
+  const e = getEntry(key);
+  const el = document.getElementById('expenseList');
+  el.innerHTML = '';
+  let total = 0;
+  (e.expenses || []).forEach((item, i) => {
+    total += Number(item.amount) || 0;
+    el.innerHTML += `<div class="expense-row">
+      <input class="exp-input" value="${escHtml(item.desc)}" placeholder="Description" onchange="entries['${key}'].expenses[${i}].desc=this.value; debouncedSave();" />
+      <input class="exp-input exp-amount" type="number" value="${item.amount}" placeholder="₹" onchange="entries['${key}'].expenses[${i}].amount=this.value; updateExpTotal('${key}'); debouncedSave();" />
+      <button class="todo-del" style="opacity:1;" onclick="entries['${key}'].expenses.splice(${i},1); renderExpenses(); debouncedSave();">✕</button>
+    </div>`;
+  });
+  document.getElementById('expTotal').textContent = '₹' + total.toLocaleString('en-IN');
+
+  const sel = document.getElementById('savingsList');
+  sel.innerHTML = '';
+  let stotal = 0;
+  (e.savings || []).forEach((item, i) => {
+    stotal += Number(item.amount) || 0;
+    sel.innerHTML += `<div class="expense-row">
+      <input class="exp-input" value="${escHtml(item.desc)}" placeholder="Description" onchange="entries['${key}'].savings[${i}].desc=this.value; debouncedSave();" />
+      <input class="exp-input exp-amount" type="number" value="${item.amount}" placeholder="₹" onchange="entries['${key}'].savings[${i}].amount=this.value; updateSavTotal('${key}'); debouncedSave();" />
+      <button class="todo-del" style="opacity:1;" onclick="entries['${key}'].savings.splice(${i},1); renderExpenses(); debouncedSave();">✕</button>
+    </div>`;
+  });
+  document.getElementById('savTotal').textContent = '₹' + stotal.toLocaleString('en-IN');
+}
+function updateExpTotal(key) {
+  const t = (entries[key].expenses||[]).reduce((s,x)=>s+(Number(x.amount)||0),0);
+  document.getElementById('expTotal').textContent = '₹' + t.toLocaleString('en-IN');
+}
+function updateSavTotal(key) {
+  const t = (entries[key].savings||[]).reduce((s,x)=>s+(Number(x.amount)||0),0);
+  document.getElementById('savTotal').textContent = '₹' + t.toLocaleString('en-IN');
+}
+function addExpense() {
+  const key = dateKey(selectedDate);
+  getEntry(key).expenses.push({ desc:'', amount:'' });
+  renderExpenses(); debouncedSave();
+}
+function addSaving() {
+  const key = dateKey(selectedDate);
+  getEntry(key).savings.push({ desc:'', amount:'' });
+  renderExpenses(); debouncedSave();
+}
+
+// ── HEALTH ──
+function renderHealth() {
+  const key = dateKey(selectedDate);
+  const e = getEntry(key);
+  const el = document.getElementById('healthList');
+  el.innerHTML = '';
+  let total = 0;
+  (e.health || []).forEach((item, i) => {
+    total += Number(item.minutes) || 0;
+    el.innerHTML += `<div class="health-row">
+      <input class="health-input" value="${escHtml(item.activity)}" placeholder="Activity (e.g. Running)" onchange="entries['${key}'].health[${i}].activity=this.value; debouncedSave();" />
+      <input class="health-input health-time" type="number" value="${item.minutes}" placeholder="min" onchange="entries['${key}'].health[${i}].minutes=this.value; renderHealth(); debouncedSave();" />
+      <button class="todo-del" style="opacity:1;" onclick="entries['${key}'].health.splice(${i},1); renderHealth(); debouncedSave();">✕</button>
+    </div>`;
+  });
+  document.getElementById('healthTotal').textContent = 'Total: ' + total + ' min' + (total >= 60 ? ' (' + Math.floor(total/60) + 'h ' + (total%60) + 'm)' : '');
+}
+function addHealth() {
+  const key = dateKey(selectedDate);
+  getEntry(key).health.push({ activity:'', minutes:'' });
+  renderHealth(); debouncedSave();
+}
+
+// ── SCHEDULE ──
+function renderSchedule() {
+  const key = dateKey(selectedDate);
+  const e = getEntry(key);
+  const el = document.getElementById('scheduleList');
+  el.innerHTML = '';
+  const hours = ['6:00 AM','7:00 AM','8:00 AM','9:00 AM','10:00 AM','11:00 AM','12:00 PM','1:00 PM','2:00 PM','3:00 PM','4:00 PM','5:00 PM','6:00 PM','7:00 PM','8:00 PM','9:00 PM','10:00 PM'];
+  if (!e.schedule || e.schedule.length === 0) {
+    e.schedule = hours.map(h => ({ time: h, task: '' }));
+  }
+  e.schedule.forEach((s, i) => {
+    const row = document.createElement('div');
+    row.className = 'schedule-row';
+    row.innerHTML = `<span class="schedule-time">${s.time}</span>
+      <input class="schedule-input" value="${escHtml(s.task)}" placeholder="—" onchange="entries['${key}'].schedule[${i}].task=this.value; debouncedSave();" />`;
+    el.appendChild(row);
+  });
+}
+
+// ── TASKS PAGE ──
+function renderTasks() {
+  const key = dateKey(selectedDate);
+  const e = getEntry(key);
+  const el = document.getElementById('allTasksList');
+  const all = [...(e.todos||[]), ...(e.priorities||[]), ...(e.calls||[]), ...(e.personal||[])];
+  if (!all.length) { el.innerHTML = '<p style="color:var(--muted); font-size:0.85rem;">No tasks for selected date. Go to Daily Planner to add some.</p>'; return; }
+  el.innerHTML = all.map(t => `<div class="todo-item"><div class="todo-checkbox ${t.done?'checked':''}"></div><span class="todo-text ${t.done?'done':''}">${t.text||'(empty)'}</span></div>`).join('');
+}
+
+// ── STATS ──
+function renderStats() {
+  const keys = Object.keys(entries);
+  document.getElementById('statEntries').textContent = keys.length;
+  let tasks = 0, water = 0, prod = 0, mood = 0, health = 0, rated = 0, expenses = 0;
+  keys.forEach(k => {
+    const e = entries[k];
+    tasks += [...(e.todos||[]),...(e.priorities||[])].filter(t=>t.done).length;
+    water += e.water || 0;
+    if (e.ratings && (e.ratings.productivity || e.ratings.mood || e.ratings.health)) {
+      prod += e.ratings.productivity || 0;
+      mood += e.ratings.mood || 0;
+      health += e.ratings.health || 0;
+      rated++;
+    }
+    expenses += (e.expenses||[]).reduce((s,x)=>s+(Number(x.amount)||0),0);
+  });
+  document.getElementById('statTasks').textContent = tasks;
+  document.getElementById('statWater').textContent = keys.length ? Math.round(water/keys.length*10)/10 : 0;
+  if (rated) {
+    const ap = (prod/rated).toFixed(1), am = (mood/rated).toFixed(1), ah = (health/rated).toFixed(1);
+    document.getElementById('avgProd').textContent = ap + '/5';
+    document.getElementById('avgMood').textContent = am + '/5';
+    document.getElementById('avgHealth').textContent = ah + '/5';
+    document.getElementById('barProd').style.width = (prod/rated/5*100) + '%';
+    document.getElementById('barMood').style.width = (mood/rated/5*100) + '%';
+    document.getElementById('barHealth').style.width = (health/rated/5*100) + '%';
+  }
+  document.getElementById('statExpenses').textContent = expenses > 0 ? 'Total logged: ₹' + expenses.toLocaleString('en-IN') : 'No expense data yet.';
+}
+
+// ── SEARCH ──
+function handleSearch(query) {
+  const panel = document.getElementById('searchResultsPanel');
+  const list = document.getElementById('searchResultsList');
+  if (!query || query.length < 2) { panel.style.display = 'none'; return; }
+  panel.style.display = 'block';
+  const q = query.toLowerCase();
+  const results = [];
+  Object.entries(entries).forEach(([key, e]) => {
+    const texts = [
+      ...((e.todos||[]).map(t=>t.text)),
+      ...((e.priorities||[]).map(t=>t.text)),
+      ...((e.calls||[]).map(t=>t.text)),
+      ...((e.personal||[]).map(t=>t.text)),
+      e.notes, e.notesTomorrow,
+      e.meals.breakfast, e.meals.lunch, e.meals.dinner
+    ].filter(Boolean);
+    texts.forEach(text => {
+      if (text.toLowerCase().includes(q)) {
+        results.push({ date: key, text });
+      }
+    });
+  });
+  if (!results.length) { list.innerHTML = '<p style="color:var(--muted); font-size:0.85rem;">No results found.</p>'; return; }
+  list.innerHTML = results.slice(0,10).map(r => {
+    const highlighted = r.text.replace(new RegExp('(' + escRegex(query) + ')', 'gi'), '<span class="highlight">$1</span>');
+    return `<div class="search-result-item" onclick="jumpToDate('${r.date}')">
+      <div class="result-date">📅 ${r.date}</div>
+      <div class="result-preview">${highlighted}</div>
+    </div>`;
+  }).join('');
+}
+function escRegex(s) { return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
+function jumpToDate(dateStr) {
+  selectedDate = new Date(dateStr + 'T00:00:00');
+  document.getElementById('globalSearch').value = '';
+  document.getElementById('searchResultsPanel').style.display = 'none';
+  showPage('planner', null);
+  document.querySelectorAll('.sidebar-link').forEach((l,i) => { if(i===0) l.classList.add('active'); else l.classList.remove('active'); });
+  loadPlannerForDate(selectedDate);
+  renderCalendar();
+}
+
+// ── PROFILE ──
+async function saveProfile() {
+  profile.name = document.getElementById('profileName').value;
+  profile.waterGoal = parseInt(document.getElementById('profileWater').value) || 8;
+  profile.timezone = document.getElementById('profileTimezone').value;
+  await persistData();
+  updateUserUI();
+  showToast('Profile saved ✓');
+}
+
+// ── TOAST ──
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ── INIT ──
+window.onload = () => {
+  renderCalendar();
+  // Firebase onAuthStateChanged above handles auto-login on page refresh
+};
+</script>
+<script>
+/* --- Dashboard UI JS --- */
+// Set date
+const dbDate = document.getElementById('dashboard-date');
+if (dbDate) {
+    dbDate.textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+}
+
+// --- Swipe Flow Logic ---
+const cards = document.querySelectorAll('#page-swipe-flow article');
+const dotsContainer = document.getElementById('progressDots');
+const mainActionBtn = document.getElementById('mainActionBtn');
+const skipBtn = document.getElementById('skipBtn');
+let currentIndex = 0;
+const totalCards = cards.length;
+let filledCount = 0;
+
+function showDashboard() {
+    showPage('planner');
+}
+
+function showSwipeFlow() {
+    showPage('swipe-flow');
+}
+
+// Prefill form and prepare data
+function initSwipeFlowData() {
+    currentIndex = 0;
+
+    // Load entry for the current active date
+    const key = dateKey(selectedDate);
+    const e = getEntry(key);
+
+    // Card 1: Priorities
+    document.getElementById('sf-priority-1').value = e.priorities[0]?.text || '';
+    document.getElementById('sf-priority-2').value = e.priorities[1]?.text || '';
+    document.getElementById('sf-priority-3').value = e.priorities[2]?.text || '';
+
+    // Card 2: To-Dos
+    document.getElementById('sf-todo-1').value = e.todos[0]?.text || '';
+    document.getElementById('sf-todo-cb-1').checked = e.todos[0]?.done || false;
+    document.getElementById('sf-todo-2').value = e.todos[1]?.text || '';
+    document.getElementById('sf-todo-cb-2').checked = e.todos[1]?.done || false;
+    document.getElementById('sf-todo-3').value = e.todos[2]?.text || '';
+    document.getElementById('sf-todo-cb-3').checked = e.todos[2]?.done || false;
+
+    // Card 3: Meals
+    document.getElementById('sf-meal-breakfast').value = e.meals?.breakfast || '';
+    document.getElementById('sf-meal-lunch').value = e.meals?.lunch || '';
+    document.getElementById('sf-meal-dinner').value = e.meals?.dinner || '';
+
+    // Card 4: Water (Dynamically render glasses based on user's goal)
+    filledCount = e.water || 0;
+    const goal = profile.waterGoal || 8;
+    const waterTracker = document.getElementById('waterTracker');
+    waterTracker.innerHTML = '';
+    for (let i = 0; i < goal; i++) {
+        const glass = document.createElement('button');
+        glass.className = 'water-glass flex flex-col items-center gap-2 group transition-transform active:scale-90';
+        glass.style.background = 'transparent';
+        glass.style.border = 'none';
+        glass.style.cursor = 'pointer';
+        const isFilled = i < filledCount;
+        glass.innerHTML = `<span class="material-symbols-outlined text-4xl transition-colors ${isFilled ? 'icon-fill text-inverse-primary' : 'text-outline-variant'}">water_drop</span>`;
+        
+        glass.addEventListener('click', function(event) {
+            event.stopPropagation(); // Prevent drag triggers
+            if (filledCount === i + 1) {
+                filledCount = i;
+            } else {
+                filledCount = i + 1;
+            }
+            updateWaterUI();
+        });
+        waterTracker.appendChild(glass);
+    }
+    updateWaterUI();
+    updateUI();
+}
+
+function updateWaterUI() {
+    const goal = profile.waterGoal || 8;
+    document.getElementById('waterCount').textContent = `${filledCount} / ${goal} Glasses`;
+    const glasses = document.querySelectorAll('#waterTracker .water-glass span');
+    glasses.forEach((glass, i) => {
+        if (i < filledCount) {
+            glass.classList.add('icon-fill', 'text-inverse-primary');
+            glass.classList.remove('text-outline-variant');
+        } else {
+            glass.classList.remove('icon-fill', 'text-inverse-primary');
+            glass.classList.add('text-outline-variant');
+        }
+    });
+}
+
+function saveSwipeFlowData() {
+    const key = dateKey(selectedDate);
+    const e = getEntry(key);
+
+    // Save Priorities
+    const p1 = document.getElementById('sf-priority-1').value.trim();
+    const p2 = document.getElementById('sf-priority-2').value.trim();
+    const p3 = document.getElementById('sf-priority-3').value.trim();
+    e.priorities = [];
+    if (p1) e.priorities.push({ text: p1, done: false });
+    if (p2) e.priorities.push({ text: p2, done: false });
+    if (p3) e.priorities.push({ text: p3, done: false });
+
+    // Save Todos
+    const t1 = document.getElementById('sf-todo-1').value.trim();
+    const t2 = document.getElementById('sf-todo-2').value.trim();
+    const t3 = document.getElementById('sf-todo-3').value.trim();
+    const cb1 = document.getElementById('sf-todo-cb-1').checked;
+    const cb2 = document.getElementById('sf-todo-cb-2').checked;
+    const cb3 = document.getElementById('sf-todo-cb-3').checked;
+    e.todos = [];
+    if (t1) e.todos.push({ text: t1, done: cb1 });
+    if (t2) e.todos.push({ text: t2, done: cb2 });
+    if (t3) e.todos.push({ text: t3, done: cb3 });
+
+    // Save Meals
+    if (!e.meals) e.meals = { breakfast: '', lunch: '', dinner: '' };
+    e.meals.breakfast = document.getElementById('sf-meal-breakfast').value.trim();
+    e.meals.lunch = document.getElementById('sf-meal-lunch').value.trim();
+    e.meals.dinner = document.getElementById('sf-meal-dinner').value.trim();
+
+    // Save Water
+    e.water = filledCount;
+
+    // Save to Firebase and refresh planner view
+    debouncedSave();
+    loadPlannerForDate(selectedDate);
+}
+
+const updateDots = () => {
+    const dots = dotsContainer.children;
+    for (let i = 0; i < dots.length; i++) {
+        if (i === currentIndex) {
+            dots[i].classList.replace('bg-outline-variant', 'bg-primary');
+            dots[i].classList.add('w-4'); 
+        } else {
+            dots[i].classList.replace('bg-primary', 'bg-outline-variant');
+            dots[i].classList.remove('w-4');
+        }
+    }
+};
+
+const updateUI = () => {
+    cards.forEach((card, index) => {
+        // Reset transformation styles applied from drag events
+        card.style.transform = '';
+        card.style.transition = 'transform 0.5s ease-out, opacity 0.5s ease-out, box-shadow 0.3s ease';
+        
+        card.className = 'absolute w-[85%] max-w-md bg-surface-container-lowest rounded-xl shadow-[0px_4px_20px_rgba(0,0,0,0.05)] border border-outline-variant/30 p-8 flex flex-col h-auto max-h-[calc(100vh-180px)] overflow-y-auto';
+        
+        if (index === currentIndex) {
+            card.classList.add('card-active');
+            card.style.pointerEvents = 'auto';
+        } else if (index < currentIndex) {
+            card.classList.add('card-exit');
+            card.style.pointerEvents = 'none';
+        } else {
+            card.classList.add('card-enter');
+            card.style.pointerEvents = 'none';
+        }
+    });
+
+    updateDots();
+
+    if (currentIndex === totalCards - 1) {
+        mainActionBtn.innerHTML = `<span>See My Day</span><span class="material-symbols-outlined text-[18px]">done</span>`;
+        mainActionBtn.classList.replace('bg-primary', 'bg-secondary');
+        mainActionBtn.classList.replace('text-on-primary', 'text-on-secondary');
+        skipBtn.style.opacity = '0';
+        skipBtn.style.pointerEvents = 'none';
+    } else {
+        mainActionBtn.innerHTML = `<span>Next</span><span class="material-symbols-outlined text-[18px]">arrow_forward</span>`;
+        mainActionBtn.classList.replace('bg-secondary', 'bg-primary');
+        mainActionBtn.classList.replace('text-on-secondary', 'text-on-primary');
+        skipBtn.style.opacity = '1';
+        skipBtn.style.pointerEvents = 'auto';
+    }
+};
+
+mainActionBtn.addEventListener('click', () => {
+    saveSwipeFlowData();
+    if (currentIndex < totalCards - 1) {
+        currentIndex++;
+        updateUI();
+    } else {
+        mainActionBtn.classList.add('scale-90');
+        setTimeout(() => {
+            mainActionBtn.classList.remove('scale-90');
+            const key = dateKey(selectedDate);
+            getEntry(key).planCreated = true;
+            debouncedSave();
+            showDashboard();
+        }, 150);
+    }
+});
+
+skipBtn.addEventListener('click', () => {
+    saveSwipeFlowData();
+    const key = dateKey(selectedDate);
+    getEntry(key).planCreated = true;
+    debouncedSave();
+    showDashboard();
+});
+
+// --- Swipe Gesture Logic ---
+let startX = 0;
+let currentX = 0;
+let isDragging = false;
+let activeDragCard = null;
+
+cards.forEach((card, index) => {
+    const handleDragStart = (clientX) => {
+        if (index !== currentIndex) return;
+        startX = clientX;
+        isDragging = true;
+        activeDragCard = card;
+        card.style.transition = 'none';
+    };
+
+    const handleDragMove = (clientX) => {
+        if (!isDragging || activeDragCard !== card) return;
+        currentX = clientX;
+        const diffX = currentX - startX;
+        // Map horizontal translation to rotation
+        card.style.transform = `translateX(${diffX}px) rotate(${diffX * 0.05}deg)`;
+    };
+
+    const handleDragEnd = (clientX) => {
+        if (!isDragging || activeDragCard !== card) return;
+        isDragging = false;
+        activeDragCard = null;
+        card.style.transition = 'transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.5s ease-out';
+        const diffX = clientX - startX;
+
+        if (Math.abs(diffX) > 120) {
+            // Dismiss Card (Swipe Skip/Next)
+            const direction = Math.sign(diffX);
+            card.style.transform = `translateX(${direction * window.innerWidth}px) rotate(${direction * 30}deg)`;
+            
+            setTimeout(() => {
+                saveSwipeFlowData();
+                if (currentIndex < totalCards - 1) {
+                    currentIndex++;
+                    updateUI();
+                } else {
+                    const key = dateKey(selectedDate);
+                    getEntry(key).planCreated = true;
+                    debouncedSave();
+                    showDashboard();
+                }
+            }, 200);
+        } else {
+            // Snap back
+            card.style.transform = '';
+        }
+    };
+
+    // Mouse Listeners
+    card.addEventListener('mousedown', (e) => {
+        if (['INPUT', 'TEXTAREA', 'BUTTON', 'SPAN', 'LABEL', 'SVG'].includes(e.target.tagName)) return;
+        handleDragStart(e.clientX);
+    });
+
+    window.addEventListener('mousemove', (e) => {
+        handleDragMove(e.clientX);
+    });
+
+    window.addEventListener('mouseup', (e) => {
+        handleDragEnd(e.clientX);
+    });
+
+    // Touch Listeners (Mobile)
+    card.addEventListener('touchstart', (e) => {
+        if (['INPUT', 'TEXTAREA', 'BUTTON', 'SPAN', 'LABEL', 'SVG'].includes(e.target.tagName)) return;
+        handleDragStart(e.touches[0].clientX);
+    }, { passive: true });
+
+    card.addEventListener('touchmove', (e) => {
+        handleDragMove(e.touches[0].clientX);
+    }, { passive: true });
+
+    card.addEventListener('touchend', (e) => {
+        handleDragEnd(e.changedTouches[0].clientX);
+    });
+});
+
+// Init
+updateUI();
+</script>
+</body>
+</html>
